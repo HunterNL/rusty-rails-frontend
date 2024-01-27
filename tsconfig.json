@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "lib": ["ES2019","DOM"],
+        "esModuleInterop": true,
+        "target": "ES2017",
+        "moduleResolution": "Node",
+        "jsx": "react",
+        "jsxFactory": "JSXFactory.CreateElement",
+        "sourceMap": true
+    },
+    "files": ["./src/app.ts", "src/ride.ts", "src/time.ts", "src/stop.ts"]
+}

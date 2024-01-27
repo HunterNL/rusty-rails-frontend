@@ -1,0 +1,1 @@
+openssl req -x509 -newkey rsa:4096 -keyout config/secret/key.pem -out config/secret/cert.pem -days 9999 -nodes -subj //CN=127.0.0.1
