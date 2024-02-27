@@ -3,7 +3,7 @@ import { FirstPersonControls } from "../jsm/flycontrols";
 import { BufferGeometry, Color, CylinderBufferGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, sRGBEncoding, Vector3, WebGLRenderer } from "three";
 import { placeRides, Ride, StaticData, wpToArray } from "../app";
 import { isActiveAtTime, trainPosition } from "../ride";
-import { elapsedDaySeconds } from "../time";
+import { currentDayOffset } from "../time";
 
 const NEAR_CLIP = 0.01
 const FAR_CLIP = 200
@@ -188,7 +188,7 @@ export class TrainMap {
 function createTimeline(data: StaticData): Line {
     const { rides, links } = data
 
-    const startTime = elapsedDaySeconds() / 60
+    const startTime = currentDayOffset() 
     const points: Vector3[] = [];
 
     for (let index = 0; index < rides.length; index++) {
@@ -197,7 +197,7 @@ function createTimeline(data: StaticData): Line {
         const futureRidePositions: Vector3[] = [];
 
         for (let i = 0; i < FUTURE_ITERATIONS; i++) {
-            const time = startTime + (i * FUTURE_STEP_SECONDS / 60)
+            const time = startTime + (i * FUTURE_STEP_SECONDS * 1000)
 
             if (!isActiveAtTime(ride, time)) {
                 break;

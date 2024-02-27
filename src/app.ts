@@ -7,7 +7,7 @@ import { Sidebar } from "./sidebar"
 import { greatCircleDistance, joinWith, onDomReady, remap } from "./util"
 import { createSideBar } from "./jsm/sidebar"
 import { getStops, isActiveAtTime, trainPosition } from "./ride"
-import { elapsedDaySeconds } from "./time"
+import { currentDayOffset } from "./time"
 import { Stop, StopTypeFromObjKey } from "./stop"
 
 const TRAIN_UPDATE_INTERVAL_MS = 500
@@ -306,7 +306,7 @@ function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexT
     
     let count = 0;
 
-    const currentTime = elapsedDaySeconds() / 60
+    const currentTime = currentDayOffset() 
     // console.log(currentTime);
     
 
