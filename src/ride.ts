@@ -1,6 +1,7 @@
 import { Vec2, Vector2, Vector3 } from "three";
-import { Leg, LegLink, MovingLeg, Ride } from "./app";
+import { Leg, LegLink, MovingLeg, Ride, StationaryLeg, isStationaryLeg } from "./app";
 import { remap } from "./util";
+import { Stop } from "./stop";
 
 
 type Position2d = {
@@ -114,4 +115,16 @@ export function trainPosition(ride: Ride, time: number): { pos: THREE.Vector2; r
             }
         }
     }
+}
+
+export function getStops(legs:Leg[]): Stop[] {
+    return legs.filter(isStationaryLeg).map(l => {
+        return {
+            code: l.station.code,
+            ArrivalTime: l.startTime,
+            DepartureTime: l.endTime,
+            stopType: l.stopType,
+            TripDistance: 0
+        } 
+    });
 }

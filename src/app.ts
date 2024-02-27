@@ -6,9 +6,9 @@ import { TrainMap } from "./jsm/map"
 import { Sidebar } from "./sidebar"
 import { greatCircleDistance, joinWith, onDomReady, remap } from "./util"
 import { createSideBar } from "./jsm/sidebar"
-import { isActiveAtTime, trainPosition } from "./ride"
+import { getStops, isActiveAtTime, trainPosition } from "./ride"
 import { elapsedDaySeconds } from "./time"
-import { Stop } from "./stop"
+import { Stop, StopTypeFromObjKey } from "./stop"
 
 const TRAIN_UPDATE_INTERVAL_MS = 500
 
@@ -18,25 +18,27 @@ const API_HOST="https://api.dev.localhost/"
 
 export type RideJSON = {
     id: number
-    stops: any[],
+    
     startTime: number,
     endTime: number
     distance: number
     dayValidity: number
     legs: LegJSON[]
-
 }
 
 
 function parseRide(json: RideJSON, stations: Map<string,Station>,links: Map<string, link>) : Ride {
+    let legs = json.legs.map(j => parseLeg(j,stations,links)) 
+
+    
     return {
         id: json.id,
         distance: json.distance,
         endTime: json.endTime,
         startTime: json.startTime,
         ride_ids: [],
-        stops: [],
-        legs: json.legs.map(j => parseLeg(j,stations,links))
+        stops: getStops(legs),
+        legs,
     }
 }
 
@@ -54,22 +56,20 @@ function parseLeg(json: LegJSON,stations: Map<string,Station>,links: Map<string,
     // }
 
     if("Stationary" in json) {
-        let a : StationaryLeg = 
-         {
+        return {
             endTime: json.end,
             startTime: json.start,
-            station: stations.get(json.Stationary),
+            station: stations.get(json.Stationary[0]),
             stationary: true,
-            stationaryAt: json.Stationary
-        }
-        return a
+            stopType: StopTypeFromObjKey(json.Stationary[1])
+        } 
+        
     }
     if("Moving" in json) {
         
         const link_codes = create_link_codes(json.Moving[0], json.Moving[1], json.Moving[2]);
 
-        let a : MovingLeg = 
-         {
+        return {
             endTime: json.end,
             startTime: json.start,
             from: json.Moving[0],
@@ -78,8 +78,8 @@ function parseLeg(json: LegJSON,stations: Map<string,Station>,links: Map<string,
             link_codes,
             links: link_codes.map(code => linkLegFromCode(links, code))
             
-        }
-        return a
+        } 
+        
     }
 }
 
@@ -91,19 +91,28 @@ export type LegJSON = {
     start: number,
     end: number,
 } & ({
-    Stationary: string
+    Stationary: string,
+    Stoptype: number
 }|{
     Moving: [string,string,string[]]
 })
 
 export type Leg = StationaryLeg | MovingLeg
 
+export function isStationaryLeg(l: Leg): l is StationaryLeg {
+    return l.stationary
+}
+
+export function isMovingLeg(l: Leg): l is MovingLeg {
+    return !l.stationary
+}
+
 export type StationaryLeg = {
     endTime: number;
     startTime: number;
     stationary: true;
-    stationaryAt: string;
     station: Station
+    stopType: number
 }
 
 export type MovingLeg = {
@@ -271,7 +280,7 @@ function parseData(remoteData: RemoteData): StaticData {
 async function getData(): Promise<RemoteData> {
     const linkspr: Promise<link[]> = fetch(API_HOST+"data/links.json").then(f => f.json()).then(f => f)
     const stationspr: Promise<Station[]> = fetch(API_HOST+"data/stations.json").then(f => f.json()).then(f => f)
-    const ridespr: Promise<Ride[]> = fetch(API_HOST+"api/activerides").then(f => f.json()).then(f => f)
+    const ridespr: Promise<RideJSON[]> = fetch(API_HOST+"api/activerides").then(f => f.json()).then(f => f)
 
     const modelLoader = new GLTFLoader()
     const modelpr = modelLoader.loadAsync("/assets/lowpolytrain.glb")
@@ -282,7 +291,8 @@ async function getData(): Promise<RemoteData> {
 }
 
 onDomReady(() => {
-    new EventSource('/esbuild').addEventListener('change', () => location.reload())
+    new EventSource('/esbuild').addEventListener('change', () => location.reload()) // Esbuild live reload
+
     const sidebar = new Sidebar(document.getElementById("sidebar"))
     document.querySelectorAll("[data-action='sidebar_close']").forEach(e => e.addEventListener("click", () => sidebar.setVisible(false)))
     setupMap(sidebar)
@@ -297,7 +307,7 @@ function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexT
     let count = 0;
 
     const currentTime = elapsedDaySeconds() / 60
-    console.log(currentTime);
+    // console.log(currentTime);
     
 
     for (let index = 0; index < rides.length; index++) {
@@ -327,8 +337,6 @@ function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexT
         count++
     }
     mesh.instanceMatrix.needsUpdate = true
-
-    console.log("Updated",count,"rides");
     
 }
 
@@ -369,9 +377,6 @@ export function placeRides(data: StaticData, dataMap: ESMap<number, Ride>): THRE
 
 async function setupMap(sidebar: Sidebar) {
     const data = parseData(await getData())
-
-    // console.log(data);
-
     const container = document.getElementById("mapcontainer")
 
     if (!container) {

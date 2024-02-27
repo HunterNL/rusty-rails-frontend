@@ -240,7 +240,7 @@ function createStationMesh(data: StaticData): THREE.Object3D {
 
     for (const station of data.stationMap.values()) {
         const mesh = new Mesh(stationGeometry, stationMaterial)
-        mesh.position.set(station.latitude, 0, station.longitude)
+        mesh.position.set(station.position.lat, 0, station.position.lon)
         allStations.add(mesh)
     }
 
