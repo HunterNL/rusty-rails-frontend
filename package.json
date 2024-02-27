@@ -9,7 +9,7 @@
   },
   "author": "",
   "dependencies": {
-    "@types/three": "^0.152.1",
+    "@types/three": "^0.142.0",
     "date-fns": "^2.28.0",
     "esbuild": "^0.19.11",
     "three": "^0.142.0",
