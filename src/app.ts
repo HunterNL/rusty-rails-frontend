@@ -9,6 +9,7 @@ import { createSideBar } from "./jsm/sidebar"
 import { getStops, isActiveAtTime, trainPosition } from "./ride"
 import { currentDayOffset } from "./time"
 import { Stop, StopTypeFromObjKey } from "./stop"
+import { newPassageRepo } from "./stoprepo"
 
 const TRAIN_UPDATE_INTERVAL_MS = 500
 
@@ -53,31 +54,30 @@ function parseLeg(json: LegJSON,stations: Map<string,Station>,links: Map<string,
     // const common : Partial<Leg> = {
     //     endTime: json.end,
     //     startTime: json.start
+
     // }
 
-    if("Stationary" in json) {
-        return {
-            endTime: json.end,
-            startTime: json.start,
-            station: stations.get(json.Stationary[0]),
-            stationary: true,
-            stopType: StopTypeFromObjKey(json.Stationary[1])
-        } 
-        
-    }
-    if("Moving" in json) {
-        
-        const link_codes = create_link_codes(json.Moving[0], json.Moving[1], json.Moving[2]);
+    if(json.moving) {
+        const link_codes = create_link_codes(json.from, json.to, json.waypoints);
 
         return {
-            endTime: json.end,
-            startTime: json.start,
-            from: json.Moving[0],
-            to: json.Moving[1],
+            endTime: json.timeEnd,
+            startTime: json.timeStart,
+            from: json.from,
+            to: json.to,
             stationary: false,
             link_codes,
             links: link_codes.map(code => linkLegFromCode(links, code))
-            
+        }
+        
+
+    } else {
+        return {
+            endTime: json.timeEnd,
+            startTime: json.timeStart,
+            station: stations.get(json.stationCode),
+            stationary: true,
+            stopType: json.stopType
         } 
         
     }
@@ -87,15 +87,28 @@ function parseLeg(json: LegJSON,stations: Map<string,Station>,links: Map<string,
 /**
  *  A segment between or at stops, specific to a single Ride  
  */
+// export type LegJSON = {
+//     start: number,
+//     end: number,
+// } & ({
+//     Stationary: string,
+//     Stoptype: number
+// }|{
+//     Moving: [string,string,string[]]
+// })
+
 export type LegJSON = {
-    start: number,
-    end: number,
-} & ({
-    Stationary: string,
-    Stoptype: number
-}|{
-    Moving: [string,string,string[]]
-})
+    "timeStart":  number
+    "timeEnd":  number
+    "moving":  boolean
+    "waypoints":  string[] | null
+    "from":  string | null
+    "to":  string | null
+    "stationCode": string | null
+    "platform":  any
+    "stopType": number | null
+    
+}
 
 export type Leg = StationaryLeg | MovingLeg
 
@@ -268,6 +281,8 @@ function parseData(remoteData: RemoteData): StaticData {
             
     //     })
     // })
+
+    newPassageRepo
 
 
 

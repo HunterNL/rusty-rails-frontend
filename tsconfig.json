@@ -8,5 +8,5 @@
         "jsxFactory": "JSXFactory.CreateElement",
         "sourceMap": true
     },
-    "files": ["./src/app.ts", "src/ride.ts", "src/time.ts", "src/stop.ts"]
+    "files": ["./src/app.ts"]
 }
