@@ -8,5 +8,6 @@
         "jsxFactory": "JSXFactory.CreateElement",
         "sourceMap": true
     },
-    "files": ["./src/app.ts"]
+    "files": ["./src/app.ts"],
+    "exclude": ["node_modules",]
 }

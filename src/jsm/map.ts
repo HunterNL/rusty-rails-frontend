@@ -1,7 +1,7 @@
 import { FirstPersonControls } from "../jsm/flycontrols";
 
-import { BufferGeometry, Color, CylinderBufferGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, sRGBEncoding, Vector3, WebGLRenderer } from "three";
-import { placeRides, Ride, StaticData, wpToArray } from "../app";
+import { ArrowHelper, AxesHelper, BufferGeometry, Color, CylinderBufferGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, sRGBEncoding, Vector3, WebGLRenderer } from "three";
+import { placeRides, projectCoordsToMapVec3, Ride, StaticData, wpToArray } from "../app";
 import { isActiveAtTime, trainPosition } from "../ride";
 import { currentDayOffset } from "../time";
 
@@ -40,17 +40,19 @@ export class TrainMap {
     constructor(private data: StaticData, document: Document, container: HTMLElement) {
         const scene = new Scene()
         const renderer = new WebGLRenderer({
-            antialias: true
+            antialias: true,
+            logarithmicDepthBuffer: true
         })
         this.staticData = data
 
+        
         renderer.setSize(window.innerWidth, window.innerHeight)
         renderer.outputEncoding = sRGBEncoding
         container.appendChild(renderer.domElement)
 
         const camera = new PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, NEAR_CLIP, FAR_CLIP)
-        camera.position.fromArray([52.01495291600182, 0.15971052352701282, 4.586391092590499])
-        camera.rotation.fromArray([-1.5872016132207276, -1.1026813100087973, -1.589178818372893, "XYZ"])
+        camera.position.fromArray([80.76576494808796,0.6901928260267816,7.411009962151727])
+        camera.rotation.fromArray([-1.5662642698302702,-0.970986368346586,-1.565305889572168,"XYZ"])
 
         // Must happen after inserting the renderer's element
         const ctrl = new FirstPersonControls(camera, renderer.domElement)
@@ -60,9 +62,9 @@ export class TrainMap {
         ctrl.mouseDragOn = false // No mousedragons
         ctrl.movementSpeed = CAM_SPEED
         ctrl.lookSpeed = LOOK_SPEED;
+        ctrl.shiftBoostFactor = 10;
 
         this.ctrl = ctrl
-
         this.scene = scene;
         this.renderer = renderer
         this.camera = camera
@@ -82,7 +84,6 @@ export class TrainMap {
         scene.background = backgroundColor;
 
         // Ground plane
-
         const grassMat = new MeshBasicMaterial({ color: grassColor })
         const infiniteplane = new PlaneBufferGeometry(1000, 1000, 1)
         const grass = new Mesh(infiniteplane, grassMat)
@@ -91,9 +92,14 @@ export class TrainMap {
         scene.add(grass)
 
         // Utrecht marker
-        // const axis = new AxesHelper(.5)
-        // axis.position.set(52.09, 0, 5.111)
-        // scene.add(axis)
+        const utrecht_coords = {latitude:52.09,longitude:5.111}
+        const axis = new AxesHelper(.5)
+        axis.position.add(projectCoordsToMapVec3(utrecht_coords))
+        scene.add(axis)
+
+        // Origin marker
+        const center = new AxesHelper(1);
+        scene.add(center);
 
         // Helper grid
         // const help = new GridHelper(200, 64)
@@ -103,8 +109,8 @@ export class TrainMap {
         const lineMaterial = new LineBasicMaterial({ color: lineColor, linewidth: 10, opacity: .5, transparent: true })
         const lineGeometry = new BufferGeometry()
         lineGeometry.setFromPoints(wpToArray(data.links))
-        const lines = new LineSegments(lineGeometry, lineMaterial)
 
+        const lines = new LineSegments(lineGeometry, lineMaterial)
         scene.add(lines)
 
         const timeLineMesh = createTimeline(data);
@@ -119,11 +125,15 @@ export class TrainMap {
 
         const raycaster = new Raycaster()
 
+        const zeroMeridian = new ArrowHelper(new Vector3(1,0,0),new Vector3(0,0,0),1000)
+        scene.add(zeroMeridian)
+
 
 
         // Development aid
         document.addEventListener("keydown", e => {
             if (e.key == " ") {
+                
                 console.log(`
             camera.position.fromArray(${JSON.stringify(camera.position.toArray())})
             camera.rotation.fromArray(${JSON.stringify(camera.rotation.toArray())})
@@ -204,9 +214,8 @@ function createTimeline(data: StaticData): Line {
             }
 
             const posRot = trainPosition(ride, time);
-
-            const pos = new Vector3(posRot.pos.x, i * FUTURE_Z_STEP, posRot.pos.y)
-
+            const pos = projectCoordsToMapVec3(posRot.position).setY(i * FUTURE_Z_STEP);
+            
             futureRidePositions.push(pos)
 
             // Stop adding points if we're past the ride's end time
@@ -240,7 +249,7 @@ function createStationMesh(data: StaticData): THREE.Object3D {
 
     for (const station of data.stationMap.values()) {
         const mesh = new Mesh(stationGeometry, stationMaterial)
-        mesh.position.set(station.position.lat, 0, station.position.lon)
+        mesh.position.add(projectCoordsToMapVec3(station.position))
         allStations.add(mesh)
     }
 

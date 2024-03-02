@@ -28,3 +28,12 @@ export function greatCircleDistance(lat1: number, lon1: number, lat2: number, lo
 
     return 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
 }
+
+export type Coordinates = {
+    latitude: number,
+    longitude: number
+}
+
+export function coordinatesFromLatLng(lat:number,lon:number): Coordinates {
+    return {latitude:lat,longitude:lon}
+}

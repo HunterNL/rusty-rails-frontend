@@ -1,11 +1,11 @@
 import { Vec2, Vector2, Vector3 } from "three";
 import { Leg, LegLink, MovingLeg, Ride, StationaryLeg, isStationaryLeg } from "./app";
-import { remap } from "./util";
+import { Coordinates, coordinatesFromLatLng, remap } from "./util";
 import { Stop } from "./stop";
 
 
 type Position2d = {
-    position: Vec2
+    position: Coordinates
     forward: Vec2
 }
 
@@ -39,8 +39,8 @@ function findPositionOnLink(l: LegLink, fraction: number): Position2d {
 
             const pointFraction = remap(coveredDistance, leftDistance, rightDistance, 0, 1);
 
-            const v1 = new Vector2(leftPoint.coordinates.lat, leftPoint.coordinates.lon);
-            const v2 = new Vector2(rightPoint.coordinates.lat, rightPoint.coordinates.lon);
+            const v1 = new Vector2(leftPoint.coordinates.latitude, leftPoint.coordinates.longitude);
+            const v2 = new Vector2(rightPoint.coordinates.latitude, rightPoint.coordinates.longitude);
             const position = v1.lerp(v2, pointFraction);
 
             const forward = v2.clone().sub(v1).normalize()
@@ -49,7 +49,7 @@ function findPositionOnLink(l: LegLink, fraction: number): Position2d {
             }
 
             return {
-                position,
+                position: coordinatesFromLatLng(position.x,position.y),
                 forward
             };
         }
@@ -87,7 +87,7 @@ export function isActiveAtTime(ride: Ride, time: number): boolean {
     return time >= ride.startTime && time < ride.endTime
 }
 
-export function trainPosition(ride: Ride, time: number): { pos: THREE.Vector2; rot: THREE.Vector3; } {
+export function trainPosition(ride: Ride, time: number): Position2d {
     if (!isActiveAtTime(ride, time)) {
         throw new Error("Cannot get position of train outside schedule times");
     }
@@ -96,23 +96,15 @@ export function trainPosition(ride: Ride, time: number): { pos: THREE.Vector2; r
 
     switch (currentLeg.stationary) {
         case true: {
-            
-            const pos = new Vector2(currentLeg.station.position.lat, currentLeg.station.position.lon);
-            const rot = new Vector3();
-            // console.log(pos,rot)
-
-            return { pos, rot }
+            return {
+                position:coordinatesFromLatLng(currentLeg.station.position.latitude,currentLeg.station.position.longitude),
+                forward: new Vector2() 
+            }
         }
         case false: {
-            // return {pos: new Vector2,rot: new Vector3}
-            const pos2d = findCurrentPositionOnLeg(currentLeg, time);
+            
+            return findCurrentPositionOnLeg(currentLeg, time);
 
-            const rot = new Vector3(pos2d.forward.x, 0, pos2d.forward.y);
-
-            return {
-                pos: new Vector2(pos2d.position.x, pos2d.position.y),
-                rot
-            }
         }
     }
 }

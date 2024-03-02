@@ -4,12 +4,13 @@ import { ESMap } from "typescript"
 import { GLTFLoader } from "./jsm/GLTFLoader"
 import { TrainMap } from "./jsm/map"
 import { Sidebar } from "./sidebar"
-import { greatCircleDistance, joinWith, onDomReady, remap } from "./util"
+import { Coordinates, joinWith, onDomReady } from "./util"
 import { createSideBar } from "./jsm/sidebar"
 import { getStops, isActiveAtTime, trainPosition } from "./ride"
 import { currentDayOffset } from "./time"
 import { Stop, StopTypeFromObjKey } from "./stop"
 import { newPassageRepo } from "./stoprepo"
+import { mercator } from "./geo";
 
 const TRAIN_UPDATE_INTERVAL_MS = 500
 
@@ -162,7 +163,7 @@ export type RideId = {
 }
 
 export type PathPoint = {
-    coordinates: {lat:number,lon:number},
+    coordinates: Coordinates,
     start_offset: number,
 }
 
@@ -183,15 +184,20 @@ export type link = {
 export type Station = {
     code: string,
     name: string,
-    position: {
-        lat: number, 
-        lon: number
-    }
+    position: Coordinates
 
 }
 
-export function vec3FromCoords(coords:{lat:number,lon:number}) : Vector3 {
-    return new Vector3(coords.lat,0,coords.lon);
+const MAP_SCALE = 90;
+
+export function projectCoordsToMapVec3(coords: Coordinates): Vector3 {
+
+    const [x,y] = mercator(coords.latitude,coords.longitude);
+    return new Vector3(x,0,y).multiplyScalar(MAP_SCALE)
+}
+
+export function vec3FromCoords(coords: Coordinates) : Vector3 {
+    return new Vector3(coords.latitude,0,coords.longitude);
 }
 
 // Take an array of links, return an array of vector3's ready for a geometrybuffer
@@ -201,7 +207,7 @@ export function vec3FromCoords(coords:{lat:number,lon:number}) : Vector3 {
 export function wpToArray(links: link[]): Vector3[] {
     const a = links.map(wp => {
         return joinWith(wp.path.points, (left, right) => {
-            return [vec3FromCoords(left.coordinates),vec3FromCoords(right.coordinates)]
+            return [projectCoordsToMapVec3(left.coordinates),projectCoordsToMapVec3(right.coordinates)]
         })
     })
 
@@ -335,10 +341,11 @@ function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexT
             continue
         }
 
-        const { pos, rot } = trainPosition(ride, currentTime)
+        const pos = trainPosition(ride, currentTime)
 
         const up = new Vector3(0, 1, 0);
-        const trainPos = new Vector3(pos.x, 0, pos.y)
+        const trainPos = projectCoordsToMapVec3(pos.position)
+        const rot = new Vector3(pos.forward.x,0,pos.forward.y)
 
         // Offset to the right of travel direction
         const right = new Vector3().crossVectors(rot, up)

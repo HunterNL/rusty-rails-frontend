@@ -43,6 +43,8 @@ class FirstPersonControls {
 	lookAt: (x: any, y: any, z: any) => any;
 	update: (delta: any) => void;
 	dispose: () => void;
+	shiftBoostFactor: number;
+	shiftDown: boolean;
 
 	constructor(object, domElement) {
 
@@ -78,6 +80,8 @@ class FirstPersonControls {
 		this.verticalMax = Math.PI;
 
 		this.mouseDragOn = false;
+		
+		this.shiftBoostFactor = 1;
 
 		// internals
 
@@ -93,6 +97,8 @@ class FirstPersonControls {
 
 		this.viewHalfX = 0;
 		this.viewHalfY = 0;
+
+		this.shiftDown = false;
 
 		// private variables
 
@@ -180,6 +186,7 @@ class FirstPersonControls {
 		};
 
 		this.onKeyDown = function (event) {
+			this.shiftDown = event.shiftKey
 
 			switch (event.code) {
 
@@ -203,6 +210,7 @@ class FirstPersonControls {
 		};
 
 		this.onKeyUp = function (event) {
+			this.shiftDown = event.shiftKey
 
 			switch (event.code) {
 
@@ -265,7 +273,13 @@ class FirstPersonControls {
 
 				}
 
-				const actualMoveSpeed = delta * this.movementSpeed;
+				let shiftFactor = 1;
+				
+				if(this.shiftDown) {
+					shiftFactor = this.shiftBoostFactor
+				}
+
+				const actualMoveSpeed = delta * this.movementSpeed * shiftFactor;
 
 				if (this.moveForward || (this.autoForward && !this.moveBackward)) this.object.translateZ(- (actualMoveSpeed + this.autoSpeedFactor));
 				if (this.moveBackward) this.object.translateZ(actualMoveSpeed);
