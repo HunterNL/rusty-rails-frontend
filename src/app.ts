@@ -13,6 +13,8 @@ import { newPassageRepo } from "./stoprepo"
 import { mercator } from "./geo";
 
 const TRAIN_UPDATE_INTERVAL_MS = 500
+const TRACK_SIDEWAYS_OFFSET = 2.5
+const TRAIN_SCALE = 0.0017;
 
 const API_HOST="https://api.dev.localhost/"
 
@@ -349,7 +351,8 @@ function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexT
 
         // Offset to the right of travel direction
         const right = new Vector3().crossVectors(rot, up)
-        trainPos.addScaledVector(right, -0.002)
+        
+        trainPos.addScaledVector(right, -TRAIN_SCALE*TRACK_SIDEWAYS_OFFSET)
 
         const mat4 = new Matrix4()
         mat4.lookAt(new Vector3, rot, new Vector3(0, 1, 0))
@@ -383,7 +386,7 @@ export function placeRides(data: StaticData, dataMap: ESMap<number, Ride>): THRE
 
 
     trainMat.map.encoding = sRGBEncoding
-    trainGeo.scale(0.001, 0.001, 0.001)
+    trainGeo.scale(TRAIN_SCALE, TRAIN_SCALE, TRAIN_SCALE)
 
     const mesh = new InstancedMesh(trainGeo, trainMat, rides.length)
 
