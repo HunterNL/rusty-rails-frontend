@@ -3,12 +3,10 @@ import { Leg, LegLink, MovingLeg, Ride, StationaryLeg, isStationaryLeg } from ".
 import { Coordinates, coordinatesFromLatLng, remap } from "./util";
 import { Stop } from "./stop";
 
-
 type Position2d = {
     position: Coordinates
     forward: Vec2
 }
-
 
 function findCurrentLeg(ride: Ride, time: number): Leg {
 
@@ -116,6 +114,7 @@ export function getStops(legs:Leg[]): Stop[] {
             ArrivalTime: l.startTime,
             DepartureTime: l.endTime,
             stopType: l.stopType,
+            platform: l.platforms,
             TripDistance: 0
         } 
     });

@@ -8,7 +8,7 @@ import { Coordinates, joinWith, onDomReady } from "./util"
 import { createSideBar } from "./jsm/sidebar"
 import { getStops, isActiveAtTime, trainPosition } from "./ride"
 import { currentDayOffset } from "./time"
-import { Stop, StopTypeFromObjKey } from "./stop"
+import { Stop} from "./stop"
 import { newPassageRepo } from "./stoprepo"
 import { mercator } from "./geo";
 
@@ -80,10 +80,17 @@ function parseLeg(json: LegJSON,stations: Map<string,Station>,links: Map<string,
             startTime: json.timeStart,
             station: stations.get(json.stationCode),
             stationary: true,
-            stopType: json.stopType
+            stopType: json.stopType,
+            platforms: json.platform
         } 
         
     }
+}
+
+export type PlatformJSON = {
+    arrival_platform: string,
+    departure_platform: string
+    footnote: number // Unused clientside
 }
 
 
@@ -108,7 +115,7 @@ export type LegJSON = {
     "from":  string | null
     "to":  string | null
     "stationCode": string | null
-    "platform":  any
+    "platform":  PlatformJSON | null
     "stopType": number | null
     
 }
@@ -127,8 +134,9 @@ export type StationaryLeg = {
     endTime: number;
     startTime: number;
     stationary: true;
-    station: Station
-    stopType: number
+    station: Station;
+    stopType: number;
+    platforms: any;
 }
 
 export type MovingLeg = {

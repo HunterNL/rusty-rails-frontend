@@ -110,6 +110,10 @@ html {
     display: table-row;
 }
 
-.sidebar_ride .stop .time,.sidebar_ride .stop .name {
+.sidebar_ride .stop .time,.sidebar_ride .stop .name, .sidebar_ride .stop .platform {
     display: table-cell;
+}
+
+.sidebar_ride .stop .platform {
+    padding-left: .5em;
 }

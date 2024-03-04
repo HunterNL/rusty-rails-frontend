@@ -2,6 +2,8 @@
  * A stop at a station, specific to a single Ride
  */
 
+import { PlatformJSON } from "./app";
+
 export const STOPTYPE = {
     UNKNOWN: 0,
     WAYPOINT: 1,
@@ -38,4 +40,5 @@ export type Stop = {
     ArrivalTime: number;
     DepartureTime: number;
     TripDistance: number;
+    platform: PlatformJSON | null
 };

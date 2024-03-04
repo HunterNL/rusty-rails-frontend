@@ -32,7 +32,7 @@ export function renderElement(tag: keyof HTMLElementTagNameMap, props: Record<st
     }
 
     for (const [key, value] of Object.entries(props)) {
-        if (key == "innerHTML" || key == "prototype" || key == "__proto__") {
+        if (key == "innerHTML" || key == "prototype" || key == "__proto__") { // TODO Whitelist or something?
             continue
         }
         if (key == "class") {
