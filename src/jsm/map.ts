@@ -4,6 +4,7 @@ import { ArrowHelper, AxesHelper, BufferGeometry, Color, CylinderBufferGeometry,
 import { placeRides, projectCoordsToMapVec3, Ride, StaticData, wpToArray } from "../app";
 import { isActiveAtTime, trainPosition } from "../ride";
 import { currentDayOffset } from "../time";
+import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 
 const NEAR_CLIP = 0.01
 const FAR_CLIP = 200
@@ -24,6 +25,7 @@ const backgroundColor = new Color(0x192F36).convertSRGBToLinear();
 
 const timelineColor = new Color(0x999999).convertSRGBToLinear();
 
+const SHOW_STATS = true; // TODO Prod toggle
 
 export class TrainMap {
     scene: THREE.Scene;
@@ -37,6 +39,7 @@ export class TrainMap {
     lastFrameTimestamp: DOMHighResTimeStamp;
     staticData: StaticData;
     instanceIdToRideMap: Map<number, Ride>;
+    stats: any
     constructor(private data: StaticData, document: Document, container: HTMLElement) {
         const scene = new Scene()
         const renderer = new WebGLRenderer({
@@ -76,6 +79,11 @@ export class TrainMap {
         this.running = false;
 
         this.populateScene()
+
+        if(SHOW_STATS) {
+            this.stats = new Stats();
+            container.appendChild(this.stats.dom)
+        }
     }
     populateScene() {
         const { scene, camera, data } = this
@@ -168,6 +176,9 @@ export class TrainMap {
     }
 
     renderOnce(dt: number) {
+        if(SHOW_STATS) {
+            this.stats.update();
+        }
         this.ctrl.update(dt)
         this.renderer.render(this.scene, this.camera)
     }
