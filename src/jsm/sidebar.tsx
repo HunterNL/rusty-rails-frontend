@@ -1,4 +1,4 @@
-import { PlatformJSON, Ride, StaticData } from "../app";
+import { PlatformJSON, Ride, StaticData, Station } from "../app";
 import { Stop, STOPTYPE } from "../stop";
 import { formatDaySeconds } from "../time";
 import { JSXFactory } from "../tsx"
@@ -18,7 +18,7 @@ function stopDisplayTime(stop: Stop): string {
 
 function stopDisplayplatform(platform: PlatformJSON): string {
     if(!platform) return ""
-    console.log(platform)
+    
     if(platform.arrival_platform == platform.departure_platform) {
         return platform.arrival_platform
     } else {
@@ -26,7 +26,7 @@ function stopDisplayplatform(platform: PlatformJSON): string {
     }
 }
 
-export function createSideBar(ride: Ride, data: StaticData): Element {
+export function createRideSideBar(ride: Ride, data: StaticData): Element {
     const stops = ride.stops
     const stations = data.stationMap
 
@@ -42,4 +42,12 @@ export function createSideBar(ride: Ride, data: StaticData): Element {
             </div>)}
     </div>
     return elem;
+}
+
+export function createStationSidebar(station: Station): Element {
+    return <div class="sidebar_station">
+        <div class="station">
+            <div class="name">{station.name}</div>
+        </div>
+    </div>
 }

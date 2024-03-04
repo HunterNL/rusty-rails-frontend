@@ -1,10 +1,11 @@
 import { FirstPersonControls } from "../jsm/flycontrols";
 
 import { ArrowHelper, AxesHelper, BufferGeometry, Color, CylinderBufferGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, sRGBEncoding, Vector3, WebGLRenderer } from "three";
-import { placeRides, projectCoordsToMapVec3, Ride, StaticData, wpToArray } from "../app";
+import { placeRides, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
 import { isActiveAtTime, trainPosition } from "../ride";
 import { currentDayOffset } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
+import { ESMap } from "typescript";
 
 const NEAR_CLIP = 0.01
 const FAR_CLIP = 200
@@ -34,12 +35,15 @@ export class TrainMap {
     running: boolean;
     loopHandler: number;
     onTrainClick?: (r: Ride) => void
+    onStationClick?: (s: Station) => void
     ctrl: FirstPersonControls;
 
     lastFrameTimestamp: DOMHighResTimeStamp;
     staticData: StaticData;
     instanceIdToRideMap: Map<number, Ride>;
     stats: any
+    stationMap: any;
+    stationMeshMap: any;
     constructor(private data: StaticData, document: Document, container: HTMLElement) {
         const scene = new Scene()
         const renderer = new WebGLRenderer({
@@ -128,8 +132,10 @@ export class TrainMap {
         scene.add(rideMesh)
 
 
-        const stationMesh = createStationMesh(this.data)
+        const {stationMesh,stationMeshMap} = createStationMesh(this.data)
         scene.add(stationMesh);
+        this.stationMeshMap = stationMeshMap;
+        
 
         const raycaster = new Raycaster()
 
@@ -154,16 +160,28 @@ export class TrainMap {
             const y = (e.clientY / window.innerHeight) * -2 + 1;
 
             raycaster.setFromCamera({ x, y }, camera)
-            const castResult = raycaster.intersectObject(rideMesh)
+            const rideCastResult = raycaster.intersectObject(rideMesh)
 
-            if (castResult.length > 0) {
-                const instanceId = castResult[0].instanceId
+            if (rideCastResult.length > 0) {
+                const instanceId = rideCastResult[0].instanceId
                 const ride = this.instanceIdToRideMap.get(instanceId)
 
                 console.debug(ride);
 
                 this?.onTrainClick(ride)
+                return;
             }
+
+
+            const stationCastResult = raycaster.intersectObject(stationMesh);
+            if(stationCastResult.length > 0) {
+                const first = stationCastResult[0];
+                const station = this.stationMeshMap.get(first.object);
+                this?.onStationClick(station)
+                return
+            }
+            
+            
         })
     }
 
@@ -255,16 +273,21 @@ const stationHeight = 100;
 const stationGeometry = new CylinderBufferGeometry(stationRadius, stationRadius, stationHeight, 6, 1, false).scale(stationScale, stationScale, stationScale);
 const stationMaterial = new MeshBasicMaterial({ color: stationColor });
 
-function createStationMesh(data: StaticData): THREE.Object3D {
+function createStationMesh(data: StaticData): {stationMesh: THREE.Object3D,stationMeshMap: ESMap<THREE.Object3D,Station>} {
     const allStations = new Object3D();
+    const map = new Map();
 
     for (const station of data.stationMap.values()) {
         const mesh = new Mesh(stationGeometry, stationMaterial)
         mesh.position.add(projectCoordsToMapVec3(station.position))
         allStations.add(mesh)
+        map.set(mesh, station)
     }
 
-    return allStations;
+    return {
+        stationMesh: allStations,
+        stationMeshMap: map
+    };
 
 }
 

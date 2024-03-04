@@ -5,7 +5,7 @@ import { GLTFLoader } from "./jsm/GLTFLoader"
 import { TrainMap } from "./jsm/map"
 import { Sidebar } from "./sidebar"
 import { Coordinates, joinWith, onDomReady } from "./util"
-import { createSideBar } from "./jsm/sidebar"
+import { createRideSideBar, createStationSidebar } from "./jsm/sidebar"
 import { getStops, isActiveAtTime, trainPosition } from "./ride"
 import { currentDayOffset } from "./time"
 import { Stop} from "./stop"
@@ -275,8 +275,6 @@ function parseData(remoteData: RemoteData): StaticData {
         linkMap.set(key2.toLowerCase(), l)
     })
 
-    // console.log(linkMap)
-
     const rides = remoteData.rides.map(ride => parseRide(ride, stationMap, linkMap))
 
     // rides.forEach(ride => {
@@ -334,15 +332,11 @@ onDomReady(() => {
 function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexToRideMap: ESMap<number, Ride>): void {
     const { rides, links } = data
 
-    
     let count = 0;
 
     const currentTime = currentDayOffset() 
-    // console.log(currentTime);
-    
 
     for (let index = 0; index < rides.length; index++) {
-        // console.log("updatedirde");
         
         const ride = rides[index];
         instanceIndexToRideMap.set(index, ride)
@@ -374,10 +368,7 @@ function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexT
 }
 
 export function placeRides(data: StaticData, dataMap: ESMap<number, Ride>): THREE.InstancedMesh {
-    const { rides } = data
-
-    // console.log("placerides",rides);
-    
+    const { rides } = data    
 
     const model = data.model
     const trainGeo = new BufferGeometry()
@@ -421,7 +412,12 @@ async function setupMap(sidebar: Sidebar) {
 
     trainMap.onTrainClick = (ride) => {
         sidebar.setVisible(true)
-        sidebar.renderIntoChild("instanceid", createSideBar(ride, trainMap.staticData))
+        sidebar.renderIntoChild("instanceid", createRideSideBar(ride, trainMap.staticData))
+    }
+
+    trainMap.onStationClick = (station: Station) => {
+        sidebar.setVisible(true);
+        sidebar.renderIntoChild("instanceid", createStationSidebar(station))
     }
 }
 
