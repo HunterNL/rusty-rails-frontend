@@ -1,7 +1,7 @@
 import { FirstPersonControls } from "../jsm/flycontrols";
 
-import { ArrowHelper, AxesHelper, BufferGeometry, Color, CylinderBufferGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, sRGBEncoding, Vector3, WebGLRenderer } from "three";
-import { placeRides, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
+import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderBufferGeometry, DoubleSide, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, Shape, ShapeBufferGeometry, sRGBEncoding, Vector3, WebGLRenderer } from "three";
+import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
 import { isActiveAtTime, trainPosition } from "../ride";
 import { currentDayOffset } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
@@ -96,12 +96,20 @@ export class TrainMap {
         scene.background = backgroundColor;
 
         // Ground plane
+        // const infiniteplane = new PlaneBufferGeometry(1000, 1000, 1)
+        // const grass = new Mesh(infiniteplane, grassMat)
+        // grass.rotateX(-Math.PI / 2)
+        // scene.add(grass);
+
+        //NL Background
         const grassMat = new MeshBasicMaterial({ color: grassColor })
-        const infiniteplane = new PlaneBufferGeometry(1000, 1000, 1)
-        const grass = new Mesh(infiniteplane, grassMat)
-        grass.rotateX(-Math.PI / 2)
-        grass.translateZ(-0.001) // Lower slightly so the lines render above
-        scene.add(grass)
+        const map_geometry = geometryFromGeoJson(this.data.map_geo)
+        grassMat.side = BackSide
+        map_geometry.rotateX(Math.PI / 2)
+        const mapMesh = new Mesh(map_geometry,grassMat)
+        // mapMesh.translateZ(-0.00001)
+        scene.add(mapMesh)
+        
 
         // Utrecht marker
         const utrecht_coords = {latitude:52.09,longitude:5.111}
@@ -136,24 +144,12 @@ export class TrainMap {
         scene.add(stationMesh);
         this.stationMeshMap = stationMeshMap;
         
-
-        const raycaster = new Raycaster()
+        
 
         const zeroMeridian = new ArrowHelper(new Vector3(1,0,0),new Vector3(0,0,0),1000)
         scene.add(zeroMeridian)
 
-
-
-        // Development aid
-        document.addEventListener("keydown", e => {
-            if (e.key == " ") {
-                
-                console.log(`
-            camera.position.fromArray(${JSON.stringify(camera.position.toArray())})
-            camera.rotation.fromArray(${JSON.stringify(camera.rotation.toArray())})
-            `)
-            }
-        })
+        const raycaster = new Raycaster()
 
         document.addEventListener("click", e => {
             const x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -180,8 +176,17 @@ export class TrainMap {
                 this?.onStationClick(station)
                 return
             }
-            
-            
+        })
+
+        // Development aid
+        document.addEventListener("keydown", e => {
+            if (e.key == " ") {
+                
+                console.log(`
+            camera.position.fromArray(${JSON.stringify(camera.position.toArray())})
+            camera.rotation.fromArray(${JSON.stringify(camera.rotation.toArray())})
+            `)
+            }
         })
     }
 
@@ -289,5 +294,45 @@ function createStationMesh(data: StaticData): {stationMesh: THREE.Object3D,stati
         stationMeshMap: map
     };
 
+}
+
+function assertEq(left,right) {
+    if(left !== right) {
+        throw new Error(`Expected ${left} to equal ${right}`);
+    }
+}
+
+function geometryFromGeoJson(map_geo: any): BufferGeometry {
+    assertEq(map_geo.type, "FeatureCollection")
+
+    const shapes = []
+    
+
+    map_geo.features.forEach(feature => {
+        assertEq(feature.type, "Feature")
+
+        feature.geometry.coordinates.forEach(geo => {
+            
+            geo.forEach(polygon => {
+                const shape = new Shape();
+                for (let index = 0; index < polygon.length; index++) {                    
+                    const [longitude,latitude] = polygon[index];
+                    const [x,y] = projectCoordsToMap({latitude,longitude})
+
+                    if(index==0) {
+                        shape.moveTo(x, y)
+                    } else {
+                        shape.lineTo(x, y)
+                    }
+                    
+                }
+                shapes.push(shape)
+            })
+
+
+        })
+    })
+
+    return new ShapeBufferGeometry(shapes)
 }
 

@@ -200,6 +200,11 @@ export type Station = {
 
 const MAP_SCALE = 90;
 
+export function projectCoordsToMap(coords: Coordinates): [number,number] {
+    const [x,y] = mercator(coords.latitude,coords.longitude);
+    return [x*MAP_SCALE,y*MAP_SCALE]
+}
+
 export function projectCoordsToMapVec3(coords: Coordinates): Vector3 {
 
     const [x,y] = mercator(coords.latitude,coords.longitude);
@@ -233,6 +238,7 @@ export type RemoteData = {
     stations: Station[]
     rides: RideJSON[]
     model: any
+    map_geo: any
 }
 
 export type StaticData = {
@@ -240,6 +246,7 @@ export type StaticData = {
     rides: Ride[]
     stationMap: Map<string, Station>
     model: any
+    map_geo: any
 }
 
 function linkLegFromCode(linkMap: Map<string, link>, code: string): LegLink {
@@ -301,7 +308,7 @@ function parseData(remoteData: RemoteData): StaticData {
 
 
     return {
-        links, rides, stationMap, model
+        links, rides, stationMap, model, map_geo: remoteData.map_geo
     }
 }
 
@@ -311,12 +318,14 @@ async function getData(): Promise<RemoteData> {
     const stationspr: Promise<Station[]> = fetch(API_HOST+"data/stations.json").then(f => f.json()).then(f => f)
     const ridespr: Promise<RideJSON[]> = fetch(API_HOST+"api/activerides").then(f => f.json()).then(f => f)
 
+    const map_geopr: Promise<object> = fetch("/data/nl_map.json").then(f => f.json())
+
     const modelLoader = new GLTFLoader()
     const modelpr = modelLoader.loadAsync("/assets/lowpolytrain.glb")
 
-    let [links, stations, rides, model] = await Promise.all([linkspr, stationspr, ridespr, modelpr])
+    let [links, stations, rides, model,map_geo] = await Promise.all([linkspr, stationspr, ridespr, modelpr,map_geopr])
 
-    return { links, stations, rides, model }
+    return { links, stations, rides, model, map_geo }
 }
 
 onDomReady(() => {
