@@ -1,24 +1,24 @@
 import { ESMap } from "typescript";
-import { isStationaryLeg, Ride, Station, StationaryLeg } from "./app";
+import { isStationaryLeg, Ride, RideIdJSON, Station, StationaryLeg } from "./app";
 
 
-type PlatformPassages = {
+export type PlatformPassages = {
     platform: string,
     passages: StationPassage[]
 }
 
-type StationPassage = {
+export type StationPassage = {
     start: number,
     end: number,
-    rideId: number
+    rideId: RideIdJSON[]
 }
 
-type StationPassages = {
+export type StationPassages = {
     station: Station
     platforms: PlatformPassages[]
 }
 
-type StationPassageRepo = ESMap<string,StationPassages>
+export type StationPassageRepo = ESMap<string,StationPassages>
 
 function appendLeg(map: StationPassageRepo, leg: StationaryLeg) {
     // Ensure station exists in map
@@ -26,9 +26,19 @@ function appendLeg(map: StationPassageRepo, leg: StationaryLeg) {
         map.set(leg.station.code, {station:leg.station,platforms:[]})
     }
 
-    const station = map.get(leg.station.code);
+    const stationPassages = map.get(leg.station.code);
 
-    // if (!station.platforms.find(pl => pl.platform == leg.)
+    if(leg.platforms == null) {
+        return
+    }
+
+    if (!stationPassages.platforms.find(pl => pl.platform == leg.platforms.arrival_platform)) {
+        stationPassages.platforms.push({platform:leg.platforms.arrival_platform,passages:[]})
+    }
+
+    let passages = stationPassages.platforms.find(pl => pl.platform == leg.platforms.arrival_platform).passages;
+
+    passages.push({start:leg.startTime,end:leg.endTime,rideId:leg.rideId}) //TODO Filter to rideId for this stop specifically
 }
 
 export function newPassageRepo(rides: Ride[]) : StationPassageRepo {
@@ -39,4 +49,5 @@ export function newPassageRepo(rides: Ride[]) : StationPassageRepo {
 
     return map
 }
+
 

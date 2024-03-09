@@ -1,5 +1,6 @@
 import { PlatformJSON, Ride, StaticData, Station } from "../app";
 import { Stop, STOPTYPE } from "../stop";
+import { StationPassages } from "../stoprepo";
 import { formatDaySeconds } from "../time";
 import { JSXFactory } from "../tsx"
 
@@ -48,6 +49,18 @@ export function createStationSidebar(station: Station): Element {
     return <div class="sidebar_station">
         <div class="station">
             <div class="name">{station.name}</div>
+        </div>
+    </div>
+}
+
+
+export function renderStationPassages(passages: StationPassages): Element {
+    return <div class="station_passages">
+        <div class="station_name">{passages.station.name}</div>
+        <div class="station_platforms">
+            {passages.platforms.map(platform => {
+                return <div class="station_platform">{platform.platform}</div>
+            })}
         </div>
     </div>
 }

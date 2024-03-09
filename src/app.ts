@@ -5,11 +5,11 @@ import { GLTFLoader } from "./jsm/GLTFLoader"
 import { TrainMap } from "./jsm/map"
 import { Sidebar } from "./sidebar"
 import { Coordinates, joinWith, onDomReady } from "./util"
-import { createRideSideBar, createStationSidebar } from "./jsm/sidebar"
+import { createRideSideBar, createStationSidebar, renderStationPassages } from "./jsm/sidebar"
 import { getStops, isActiveAtTime, trainPosition } from "./ride"
 import { currentDayOffset } from "./time"
 import { Stop} from "./stop"
-import { newPassageRepo } from "./stoprepo"
+import { newPassageRepo, StationPassageRepo } from "./stoprepo"
 import { mercator } from "./geo";
 
 const TRAIN_UPDATE_INTERVAL_MS = 500
@@ -21,25 +21,34 @@ const API_HOST="https://api.dev.localhost/"
 
 
 export type RideJSON = {
-    id: number
-    
+    id: number   
     startTime: number,
     endTime: number
     distance: number
     dayValidity: number
     legs: LegJSON[]
+    rideIds: RideIdJSON[]
+}
+
+export type RideIdJSON= {
+    "company_id": number,
+    "ride_id": number | null,
+    "line_id": number | null,
+    "first_stop": number,
+    "last_stop": number,
+    "ride_name": null
 }
 
 
-function parseRide(json: RideJSON, stations: Map<string,Station>,links: Map<string, link>) : Ride {
-    let legs = json.legs.map(j => parseLeg(j,stations,links)) 
+function parseRide(rideJson: RideJSON, stations: Map<string,Station>,links: Map<string, link>) : Ride {
+    let legs = rideJson.legs.map((legJson,index) => parseLeg(legJson,index,rideJson,stations,links)) 
 
     
     return {
-        id: json.id,
-        distance: json.distance,
-        endTime: json.endTime,
-        startTime: json.startTime,
+        id: rideJson.id,
+        distance: rideJson.distance,
+        endTime: rideJson.endTime,
+        startTime: rideJson.startTime,
         ride_ids: [],
         stops: getStops(legs),
         legs,
@@ -53,7 +62,11 @@ function create_link_codes(start:string,end:string,waypoints: string[]): string[
     })
 }
 
-function parseLeg(json: LegJSON,stations: Map<string,Station>,links: Map<string,link>) : Leg {
+function rideIdsForLegNumber(ride: RideJSON, leg: LegJSON): RideIdJSON[] {
+    return ride.rideIds
+}
+
+function parseLeg(json: LegJSON,index:number,rideJson: RideJSON, stations: Map<string,Station>,links: Map<string,link>) : Leg {
     // const common : Partial<Leg> = {
     //     endTime: json.end,
     //     startTime: json.start
@@ -71,6 +84,7 @@ function parseLeg(json: LegJSON,stations: Map<string,Station>,links: Map<string,
             stationary: false,
             link_codes,
             links: link_codes.map(code => linkLegFromCode(links, code))
+            // TODO Add rideId here
         }
         
 
@@ -81,7 +95,8 @@ function parseLeg(json: LegJSON,stations: Map<string,Station>,links: Map<string,
             station: stations.get(json.stationCode),
             stationary: true,
             stopType: json.stopType,
-            platforms: json.platform
+            platforms: json.platform,
+            rideId: rideIdsForLegNumber(rideJson, json)
         } 
         
     }
@@ -136,7 +151,8 @@ export type StationaryLeg = {
     stationary: true;
     station: Station;
     stopType: number;
-    platforms: any;
+    platforms: PlatformJSON;
+    rideId: RideIdJSON[]
 }
 
 export type MovingLeg = {
@@ -246,7 +262,8 @@ export type StaticData = {
     rides: Ride[]
     stationMap: Map<string, Station>
     model: any
-    map_geo: any
+    map_geo: any,
+    stationPassages: StationPassageRepo
 }
 
 function linkLegFromCode(linkMap: Map<string, link>, code: string): LegLink {
@@ -303,12 +320,12 @@ function parseData(remoteData: RemoteData): StaticData {
     //     })
     // })
 
-    newPassageRepo
+    const passages = newPassageRepo(rides)
 
 
 
     return {
-        links, rides, stationMap, model, map_geo: remoteData.map_geo
+        links, rides, stationMap, model, map_geo: remoteData.map_geo,stationPassages:passages
     }
 }
 
@@ -426,7 +443,15 @@ async function setupMap(sidebar: Sidebar) {
 
     trainMap.onStationClick = (station: Station) => {
         sidebar.setVisible(true);
-        sidebar.renderIntoChild("instanceid", createStationSidebar(station))
+
+        let passages = trainMap.staticData.stationPassages.get(station.code);
+
+        if(passages) {
+            sidebar.renderIntoChild("instanceid", renderStationPassages(passages))
+        } else {
+            sidebar.renderIntoChild("instanceid", createStationSidebar(station))
+        }
+        
     }
 }
 
