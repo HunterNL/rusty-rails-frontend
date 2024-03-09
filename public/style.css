@@ -44,6 +44,13 @@ html {
     
 }
 
+#sidebar.large {
+    left: 50px;
+    right: 50px;
+    top: 50px;
+    width: auto;
+}
+
 #sidebar.visible {
     transform: translate3d(0,0,0);
 }
