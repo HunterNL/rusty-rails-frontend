@@ -350,6 +350,12 @@ onDomReady(() => {
 
     const sidebar = new Sidebar(document.getElementById("sidebar"))
     document.querySelectorAll("[data-action='sidebar_close']").forEach(e => e.addEventListener("click", () => sidebar.setVisible(false,"small")))
+
+    window.addEventListener("keydown", e => {
+        if(e.key == "Escape") {
+            sidebar.setVisible(false,"")
+        }
+    })
     setupMap(sidebar)
 })
 
