@@ -349,11 +349,11 @@ onDomReady(() => {
     new EventSource('/esbuild').addEventListener('change', () => location.reload()) // Esbuild live reload
 
     const sidebar = new Sidebar(document.getElementById("sidebar"))
-    document.querySelectorAll("[data-action='sidebar_close']").forEach(e => e.addEventListener("click", () => sidebar.setVisible(false,"small")))
+    document.querySelectorAll("[data-action='sidebar_close']").forEach(e => e.addEventListener("click", () => sidebar.hide()))
 
     window.addEventListener("keydown", e => {
         if(e.key == "Escape") {
-            sidebar.setVisible(false,"")
+            sidebar.hide()
         }
     })
     setupMap(sidebar)
@@ -443,12 +443,12 @@ async function setupMap(sidebar: Sidebar) {
     trainMap.startLoop()
 
     trainMap.onTrainClick = (ride) => {
-        sidebar.setVisible(true,"side")
+        sidebar.reveal("side")
         sidebar.renderIntoChild("instanceid", createRideSideBar(ride, trainMap.staticData))
     }
 
     trainMap.onStationClick = (station: Station) => {
-        sidebar.setVisible(true,"large");
+        sidebar.reveal("large");
 
         let passages = trainMap.staticData.stationPassages.get(station.code);
 

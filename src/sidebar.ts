@@ -49,16 +49,14 @@ export class Sidebar {
         this.element.addEventListener("touchend", onEnd, { passive: true })
     }
 
-    setVisible(visible: boolean,style:string) {
-        if (visible) {
-            this.element.className="";
-            this.element.classList.add("visible")
-            this.element.classList.add(style)
-        } else {
-            this.element.className=""
-            this.element.classList.remove("visible")
-        }
+    reveal(style: string) {
+        this.element.className="";
+        this.element.classList.add("visible")
+        this.element.classList.add(style)
+    }
 
+    hide() {
+        this.element.className=""
     }
 
 }
