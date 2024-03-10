@@ -124,3 +124,12 @@ html {
 .sidebar_ride .stop .platform {
     padding-left: .5em;
 }
+
+.station_platform {
+    position: relative;
+}
+
+.timeline_item {
+    background-color: gray;
+    position: absolute;
+}

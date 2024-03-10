@@ -361,12 +361,10 @@ onDomReady(() => {
 
 
 
-function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexToRideMap: ESMap<number, Ride>): void {
+function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexToRideMap: ESMap<number, Ride>,currentTime: number): void {
     const { rides, links } = data
 
     let count = 0;
-
-    const currentTime = currentDayOffset() 
 
     for (let index = 0; index < rides.length; index++) {
         
@@ -421,10 +419,12 @@ export function placeRides(data: StaticData, dataMap: ESMap<number, Ride>): THRE
 
     const mesh = new InstancedMesh(trainGeo, trainMat, rides.length)
 
-    updateRides(mesh, data, dataMap)
+
+    updateRides(mesh, data, dataMap,currentDayOffset() )
 
     window.setInterval((dt) => {
-        updateRides(mesh, data, dataMap)
+        const currentTime = currentDayOffset() 
+        updateRides(mesh, data, dataMap,currentTime)
     }, TRAIN_UPDATE_INTERVAL_MS)
 
 
@@ -453,7 +453,7 @@ async function setupMap(sidebar: Sidebar) {
         let passages = trainMap.staticData.stationPassages.get(station.code);
 
         if(passages) {
-            sidebar.renderIntoChild("instanceid", renderStationPassages(passages))
+            sidebar.renderIntoChild("instanceid", renderStationPassages(passages,currentDayOffset()))
         } else {
             sidebar.renderIntoChild("instanceid", createStationSidebar(station))
         }

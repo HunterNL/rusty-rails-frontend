@@ -39,6 +39,10 @@ export function renderElement(tag: keyof HTMLElementTagNameMap, props: Record<st
             elem.className = value
             continue
         }
+        if(key == "style") {
+            applyElemStyle(elem,value)
+            continue
+        }
         elem[key] = value
     }
 
@@ -49,4 +53,10 @@ export function renderElement(tag: keyof HTMLElementTagNameMap, props: Record<st
 
 export const JSXFactory = {
     CreateElement: renderElement
+}
+
+function applyElemStyle(elem: HTMLElement, style: CSSStyleDeclaration) {
+    for (const [key,value] of Object.entries(style)) {
+        elem.style[key]=value
+    }
 }

@@ -1,7 +1,7 @@
 import { PlatformJSON, Ride, StaticData, Station } from "../app";
 import { Stop, STOPTYPE } from "../stop";
-import { StationPassages } from "../stoprepo";
-import { formatDaySeconds } from "../time";
+import { StationPassage, StationPassages } from "../stoprepo";
+import { asSeconds, formatDaySeconds } from "../time";
 import { JSXFactory } from "../tsx"
 
 function stopDisplayTime(stop: Stop): string {
@@ -53,13 +53,40 @@ export function createStationSidebar(station: Station): Element {
     </div>
 }
 
+function calcPassageStyle(passage: StationPassage,startTime:number): Partial<CSSStyleDeclaration> {
+    const offsetSeconds = asSeconds(passage.start - startTime);
+    const scale = 0.06;
+    const baseOffset=5;
 
-export function renderStationPassages(passages: StationPassages): Element {
+    if(offsetSeconds<0) {
+        return {
+            display:"none"
+        }
+    }
+
+    return {
+        left: (offsetSeconds*scale+baseOffset)+"px",
+        top:"0px"
+    }
+}
+
+
+export function renderStationPassages(passages: StationPassages, startTime: number): Element {
     return <div class="station_passages">
         <div class="station_name">{passages.station.name}</div>
         <div class="station_platforms">
             {passages.platforms.map(platform => {
-                return <div class="station_platform">{platform.platform}</div>
+                return <div class="station_platform">
+                    <div class="platform_name">{platform.platform}</div>
+                    <div class="platform_timeline">
+                        {platform.passages.map(passage => {
+                            
+
+                            return <div class="timeline_item" style={calcPassageStyle(passage,startTime)}>{passage.rideId[0].ride_id+""}</div>
+                        })}
+                    </div>
+                    
+                </div>
             })}
         </div>
     </div>
