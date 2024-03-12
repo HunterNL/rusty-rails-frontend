@@ -125,11 +125,26 @@ html {
     padding-left: .5em;
 }
 
-.station_platform {
+.platform_timeline {
+    height: 100%;
+    display: inline-block;
     position: relative;
+    width: 100%;
+    flex:1;
+}
+
+.platform_name {
+    display: inline-block;
+    flex-basis: 2em;
+}
+
+.station_platform {
+    display: flex;
+    height: 2em;
 }
 
 .timeline_item {
     background-color: gray;
     position: absolute;
+    height: 100%;
 }

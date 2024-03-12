@@ -7,7 +7,7 @@ import { Sidebar } from "./sidebar"
 import { Coordinates, joinWith, onDomReady } from "./util"
 import { createRideSideBar, createStationSidebar, renderStationPassages } from "./jsm/sidebar"
 import { getStops, isActiveAtTime, trainPosition } from "./ride"
-import { currentDayOffset } from "./time"
+import { asSeconds, currentDayOffset, fromSeconds } from "./time"
 import { Stop} from "./stop"
 import { newPassageRepo, StationPassageRepo } from "./stoprepo"
 import { mercator } from "./geo";
@@ -451,9 +451,11 @@ async function setupMap(sidebar: Sidebar) {
         sidebar.reveal("large");
 
         let passages = trainMap.staticData.stationPassages.get(station.code);
+        let now = currentDayOffset();
+        let end = now + fromSeconds(3600*2)
 
         if(passages) {
-            sidebar.renderIntoChild("instanceid", renderStationPassages(passages,currentDayOffset()))
+            sidebar.renderIntoChild("instanceid", renderStationPassages(passages,currentDayOffset(),end))
         } else {
             sidebar.renderIntoChild("instanceid", createStationSidebar(station))
         }

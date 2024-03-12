@@ -1,7 +1,8 @@
 import { PlatformJSON, Ride, StaticData, Station } from "../app";
+import { inverseLerp } from "../number";
 import { Stop, STOPTYPE } from "../stop";
 import { StationPassage, StationPassages } from "../stoprepo";
-import { asSeconds, formatDaySeconds } from "../time";
+import { formatDaySeconds, fromSeconds } from "../time";
 import { JSXFactory } from "../tsx"
 
 function stopDisplayTime(stop: Stop): string {
@@ -53,25 +54,25 @@ export function createStationSidebar(station: Station): Element {
     </div>
 }
 
-function calcPassageStyle(passage: StationPassage,startTime:number): Partial<CSSStyleDeclaration> {
-    const offsetSeconds = asSeconds(passage.start - startTime);
-    const scale = 0.06;
-    const baseOffset=5;
+function calcPassageStyle(passage: StationPassage,startTime:number, endTime: number): Partial<CSSStyleDeclaration> {
+    let offset = inverseLerp(startTime, endTime, passage.start);
 
-    if(offsetSeconds<0) {
+
+    // TODO Filter out earlier
+    if(offset<0||offset>1) {
         return {
             display:"none"
         }
     }
 
     return {
-        left: (offsetSeconds*scale+baseOffset)+"px",
+        left: (offset*100)+"%",
         top:"0px"
     }
 }
 
 
-export function renderStationPassages(passages: StationPassages, startTime: number): Element {
+export function renderStationPassages(passages: StationPassages, startTime: number, endTime: number): Element {
     return <div class="station_passages">
         <div class="station_name">{passages.station.name}</div>
         <div class="station_platforms">
@@ -80,9 +81,9 @@ export function renderStationPassages(passages: StationPassages, startTime: numb
                     <div class="platform_name">{platform.platform}</div>
                     <div class="platform_timeline">
                         {platform.passages.map(passage => {
-                            
-
-                            return <div class="timeline_item" style={calcPassageStyle(passage,startTime)}>{passage.rideId[0].ride_id+""}</div>
+                            return <div class="timeline_item" style={calcPassageStyle(passage,startTime,endTime)}>
+                                {passage.rideId.map(p => p.ride_id).join("/")}
+                            </div>
                         })}
                     </div>
                     

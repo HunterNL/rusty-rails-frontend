@@ -10,6 +10,10 @@ export function asSeconds(a:number): number {
     return a / SECOND
 }
 
+export function fromSeconds(a:number): number {
+    return a * SECOND
+}
+
 
 export function currentDayOffset(): number {
     // TODO Timezone awareness, dayoffset should always be Europe/Amsterdam
