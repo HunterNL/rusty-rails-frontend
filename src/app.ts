@@ -4,7 +4,7 @@ import { ESMap } from "typescript"
 import { GLTFLoader } from "./jsm/GLTFLoader"
 import { TrainMap } from "./jsm/map"
 import { Sidebar } from "./sidebar"
-import { Coordinates, joinWith, onDomReady } from "./util"
+import { Coordinates, greatCircleDistanceCoords, joinWith, onDomReady } from "./util"
 import { createRideSideBar, createStationSidebar, renderStationPassages } from "./jsm/sidebar"
 import { getStops, isActiveAtTime, trainPosition } from "./ride"
 import { asSeconds, currentDayOffset, fromSeconds } from "./time"
@@ -198,6 +198,14 @@ export type Path=  {
     len: number,
 }
 
+export type PathJSON = {points:{coordinates:Coordinates}[]}
+
+export type LinkJSON = {
+    from: string
+    to: string
+    path: PathJSON
+}
+
 /**
  * A list of coordinates describing the track position, originating from station "From" leading to station "To"
  */
@@ -250,7 +258,7 @@ export function findLink(links: link[], a: string, b: string): link {
 }
 
 export type RemoteData = {
-    links: link[]
+    links: LinkJSON[]
     stations: Station[]
     rides: RideJSON[]
     model: any
@@ -281,9 +289,43 @@ function linkLegFromCode(linkMap: Map<string, link>, code: string): LegLink {
     }
 }
 
+function pathFromCoordinateArray(coords: Coordinates[]): Path {
+    // console.log("IN")
+    // console.log(coords,coords.length);
+    if(coords.length < 2) {
+        throw new Error("Expected path to have at least 2 elements");
+    }
+
+    const out: Path["points"] = [{start_offset:0,coordinates:coords[0]}]
+
+    let sum = 0;
+    // Note index = 1!
+    for (let index = 1; index < coords.length; index++) {
+        const lastElement = coords[index-1];
+        const element = coords[index];
+
+        sum += greatCircleDistanceCoords(lastElement, element)
+        out.push({coordinates:element,start_offset:sum})    
+    }
+
+    return {
+        len: sum,
+        points: out
+    }
+}
+
+function parseLink(json: LinkJSON): link {
+    return {
+        from: json.from,
+        to: json.to,
+        path: pathFromCoordinateArray(json.path.points.map(a => a.coordinates))
+    }
+}
+
 // Process and transform data in structures more useful locally
 function parseData(remoteData: RemoteData): StaticData {
-    const { links, model } = remoteData;
+    const {model} =remoteData;
+    const links = remoteData.links.map(parseLink)
 
     const stationMap = new Map<string, Station>();
     remoteData.stations.forEach(station => {
