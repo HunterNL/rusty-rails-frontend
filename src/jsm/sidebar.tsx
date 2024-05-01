@@ -35,7 +35,7 @@ export function createRideSideBar(ride: Ride, data: StaticData): Element {
     // debugger
 
     const elem = <div class="sidebar_ride">
-        {ride.ride_ids.map(id => { return <div class="id">{id.number.toString()}</div> })}
+        <div class="id">{ride.id.toString()}</div> 
         {stops.map(stop =>
             <div class="stop">
                 <div class="name">{stations.get(stop.code).name}</div>
@@ -82,7 +82,7 @@ export function renderStationPassages(passages: StationPassages, startTime: numb
                     <div class="platform_timeline">
                         {platform.passages.map(passage => {
                             return <div class="timeline_item" style={calcPassageStyle(passage,startTime,endTime)}>
-                                {passage.rideId.map(p => p.ride_id).join("/")}
+                                {passage.id}
                             </div>
                         })}
                     </div>

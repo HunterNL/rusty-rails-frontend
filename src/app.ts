@@ -27,7 +27,6 @@ export type RideJSON = {
     distance: number
     dayValidity: number
     legs: LegJSON[]
-    rideIds: RideIdJSON[]
 }
 
 export type RideIdJSON= {
@@ -49,7 +48,6 @@ function parseRide(rideJson: RideJSON, stations: Map<string,Station>,links: Map<
         distance: rideJson.distance,
         endTime: rideJson.endTime,
         startTime: rideJson.startTime,
-        ride_ids: [],
         stops: getStops(legs),
         legs,
     }
@@ -62,9 +60,6 @@ function create_link_codes(start:string,end:string,waypoints: string[]): string[
     })
 }
 
-function rideIdsForLegNumber(ride: RideJSON, leg: LegJSON): RideIdJSON[] {
-    return ride.rideIds
-}
 
 function parseLeg(json: LegJSON,index:number,rideJson: RideJSON, stations: Map<string,Station>,links: Map<string,link>) : Leg {
     // const common : Partial<Leg> = {
@@ -96,7 +91,6 @@ function parseLeg(json: LegJSON,index:number,rideJson: RideJSON, stations: Map<s
             stationary: true,
             stopType: json.stopType,
             platforms: json.platform,
-            rideId: rideIdsForLegNumber(rideJson, json)
         } 
         
     }
@@ -152,7 +146,6 @@ export type StationaryLeg = {
     station: Station;
     stopType: number;
     platforms: PlatformJSON;
-    rideId: RideIdJSON[]
 }
 
 export type MovingLeg = {
@@ -178,7 +171,6 @@ export type Ride = {
     startTime: number
     endTime: number
     legs: Leg[]
-    ride_ids: RideId[]
 }
 
 export type RideId = {

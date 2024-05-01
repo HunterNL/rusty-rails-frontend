@@ -11,7 +11,7 @@ export type PlatformPassages = {
 export type StationPassage = {
     start: number,
     end: number,
-    rideId: RideIdJSON[]
+    id: string
 }
 
 export type StationPassages = {
@@ -60,7 +60,7 @@ function platformOrder(a:string,b:string): number {
     return aNum - bNum
 }
 
-function appendLeg(map: StationPassageRepo, leg: StationaryLeg) {
+function appendLeg(map: StationPassageRepo, leg: StationaryLeg,id: string) {
     // Ensure station exists in map
     if (!map.has(leg.station.code)) {
         map.set(leg.station.code, {station:leg.station,platforms:[]})
@@ -78,14 +78,14 @@ function appendLeg(map: StationPassageRepo, leg: StationaryLeg) {
 
     let passages = stationPassages.platforms.find(pl => pl.platform == leg.platforms.arrival_platform).passages;
 
-    passages.push({start:leg.startTime,end:leg.endTime,rideId:leg.rideId}) //TODO Filter to rideId for this stop specifically
+    passages.push({start:leg.startTime,end:leg.endTime,id}) //TODO Filter to rideId for this stop specifically
 }
 
 export function newPassageRepo(rides: Ride[]) : StationPassageRepo {
     const map: StationPassageRepo = new Map();
 
     // Populate map with every station
-    rides.forEach(ride => ride.legs.filter(isStationaryLeg).forEach(leg => appendLeg(map, leg)));
+    rides.forEach(ride => ride.legs.filter(isStationaryLeg).forEach(leg => appendLeg(map, leg,ride.id.toString())));
 
     for (let station of map.values()) {
         station.platforms.sort((p1,p2) => platformOrder(p1.platform,p2.platform))
