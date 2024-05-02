@@ -13,12 +13,27 @@
 <body>
     <div id="mapcontainer">
         <div id="map"></div>
-        <div id="sidebar">
+        <div id="sidebar" class="map_overlay">
             <div id="swipe-handle"></div>
             <div id="close-button-ctr">
                 <div id="close-button" data-action="sidebar_close"></div>
             </div>
-            <div id="sidebar-content"><div data-field="instanceid"></div></div>
+            <div id="sidebar-content">
+                <div data-field="instanceid"></div>
+            </div>
+        </div>
+        <div id="stack_left">
+            <div class="map_overlay">
+                <form id="plan_form" action="">
+                    <input data-field='from' type="text">
+                    <input data-field='to' type="text">
+                    <input type="submit" value="Send">
+                </form>
+            </div>
+
+            <div class="map_overlay">
+                <div id="trip_list">Blahblah</div>
+            </div>
         </div>
     </div>
 </body>

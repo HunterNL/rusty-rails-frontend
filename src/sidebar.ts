@@ -1,6 +1,7 @@
 const MIN_DRAG_TO_DISMISS = 200
 
 export class Sidebar {
+    style: string
     constructor(public element: HTMLElement) {
         if (!(element instanceof HTMLElement)) {
             throw new Error("Sidebar constructor requires an HTMLELement argument")
@@ -50,13 +51,15 @@ export class Sidebar {
     }
 
     reveal(style: string) {
-        this.element.className="";
+        this.style=style;
         this.element.classList.add("visible")
         this.element.classList.add(style)
     }
 
     hide() {
-        this.element.className=""
+        this.element.classList.remove("visible");
+        this.element.classList.remove(this.style);
+        this.style = "";
     }
 
 }

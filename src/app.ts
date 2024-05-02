@@ -38,6 +38,16 @@ export type RideIdJSON= {
     "ride_name": null
 }
 
+export async function findPath(from:string,to:string) {
+    
+    const base_url = new URL(API_HOST + "api/find_route");
+
+    const params =  new URLSearchParams({
+        from,
+        to
+    })
+    return fetch(base_url+"?"+params.toString()).then(resp => resp.json());
+}
 
 function parseRide(rideJson: RideJSON, stations: Map<string,Station>,links: Map<string, link>) : Ride {
     let legs = rideJson.legs.map((legJson,index) => parseLeg(legJson,index,rideJson,stations,links)) 
@@ -380,7 +390,7 @@ async function getData(): Promise<RemoteData> {
 }
 
 onDomReady(() => {
-    new EventSource('/esbuild').addEventListener('change', () => location.reload()) // Esbuild live reload
+    setupHotReload() 
 
     const sidebar = new Sidebar(document.getElementById("sidebar"))
     document.querySelectorAll("[data-action='sidebar_close']").forEach(e => e.addEventListener("click", () => sidebar.hide()))
@@ -391,9 +401,17 @@ onDomReady(() => {
         }
     })
     setupMap(sidebar)
+
+    const form = document.getElementById("plan_form");
+    const trip_list = document.getElementById("trip_list");
+    setupForm(form,trip_list);
 })
 
 
+
+function setupHotReload() {
+    new EventSource('/esbuild').addEventListener('change', () => location.reload())
+}
 
 function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexToRideMap: ESMap<number, Ride>,currentTime: number): void {
     const { rides, links } = data
@@ -524,3 +542,28 @@ function originIsolationCheck() {
 }
 
 originIsolationCheck()
+
+function harvestElement(elem: HTMLElement): any {
+    return (elem as any).value;
+}
+
+function harvest(form: HTMLElement): Record<string,any> {
+    const out = {};
+    form.querySelectorAll("[data-field]").forEach(e => {
+        const key = (e as HTMLElement).dataset.field;
+        const value = harvestElement(e as HTMLElement);
+
+        out[key]=value;
+    })
+    return out
+}
+
+function setupForm(form: HTMLElement,outputElem: HTMLElement) {
+    form.addEventListener("submit", e => {
+        e.preventDefault()
+            let formdata = harvest(form)
+            findPath(formdata.from, formdata.to).then(res => {
+                outputElem.innerText = JSON.stringify(res);
+            })
+    })
+}
