@@ -1,6 +1,9 @@
 {
     "compilerOptions": {
-        "lib": ["ES2019","DOM"],
+        "lib": [
+            "ES2019",
+            "DOM"
+        ],
         "esModuleInterop": true,
         "target": "ES2017",
         "moduleResolution": "Node",
@@ -8,6 +11,10 @@
         "jsxFactory": "JSXFactory.CreateElement",
         "sourceMap": true
     },
-    "files": ["./src/app.ts"],
-    "exclude": ["node_modules",]
+    "files": [
+        "./src/app.ts"
+    ],
+    "exclude": [
+        "node_modules",
+    ]
 }

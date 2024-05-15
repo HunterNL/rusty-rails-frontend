@@ -2,6 +2,10 @@ export function remap(value: number, fromLow: number, fromHigh: number, toLow: n
     return toLow + (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow)
 }
 
+export function invLerp(value:number, low: number, high: number) {
+    return (value - low) / (high-low)
+}
+
 export function joinWith<T, U>(r: T[], f: (a: T, B: T) => U): U[] {
     const out = [];
     for (let index = 0; index < r.length - 1; index++) {

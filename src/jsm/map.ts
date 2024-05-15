@@ -2,7 +2,7 @@ import { FirstPersonControls } from "../jsm/flycontrols";
 
 import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderBufferGeometry, DoubleSide, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, Shape, ShapeBufferGeometry, sRGBEncoding, Vector3, WebGLRenderer } from "three";
 import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
-import { isActiveAtTime, trainPosition } from "../ride";
+import { isActiveAtTime, realPosition, trainPosition } from "../ride";
 import { currentDayOffset } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 import { ESMap } from "typescript";
@@ -235,34 +235,7 @@ function createTimeline(data: StaticData): Line {
     const startTime = currentDayOffset() 
     const points: Vector3[] = [];
 
-    for (let index = 0; index < rides.length; index++) {
-        const ride = rides[index];
-
-        const futureRidePositions: Vector3[] = [];
-
-        for (let i = 0; i < FUTURE_ITERATIONS; i++) {
-            const time = startTime + (i * FUTURE_STEP_SECONDS * 1000)
-
-            if (!isActiveAtTime(ride, time)) {
-                break;
-            }
-
-            const posRot = trainPosition(ride, time);
-            const pos = projectCoordsToMapVec3(posRot.position).setY(i * FUTURE_Z_STEP);
-            
-            futureRidePositions.push(pos)
-
-            // Stop adding points if we're past the ride's end time
-            if (time > ride.endTime) break;
-        }
-
-        for (let index = 1; index < futureRidePositions.length; index++) { // Note start at 1
-            points.push(futureRidePositions[index - 1]);
-            points.push(futureRidePositions[index]);
-        }
-    }
-
-
+    rides.map(ride => appendRidePoints(startTime, ride, points));
 
     const geometry = new BufferGeometry().setFromPoints(points)
     const material = new LineBasicMaterial({ opacity: 0.5, color: timelineColor })
@@ -277,6 +250,33 @@ const stationHeight = 100;
 
 const stationGeometry = new CylinderBufferGeometry(stationRadius, stationRadius, stationHeight, 6, 1, false).scale(stationScale, stationScale, stationScale);
 const stationMaterial = new MeshBasicMaterial({ color: stationColor });
+
+function appendRidePoints(startTime: number, ride: Ride, points: Vector3[]) {
+    const futureRidePositions: Vector3[] = [];
+
+    for (let i = 0; i < FUTURE_ITERATIONS; i++) {
+        const time = startTime + (i * FUTURE_STEP_SECONDS * 1000);
+
+        if (!isActiveAtTime(ride, time)) {
+            break;
+        }
+
+        const trackpos = trainPosition(ride, time)
+        const posRot = realPosition(trackpos);
+        const pos = projectCoordsToMapVec3(posRot.position).setY(i * FUTURE_Z_STEP);
+
+        futureRidePositions.push(pos);
+
+        // Stop adding points if we're past the ride's end time
+        if (time > ride.endTime) break;
+    }
+
+    // `futureRidePostions` is a list of points, here we take each pair and output the two vertices a line segment requires
+    for (let index = 1; index < futureRidePositions.length; index++) { // Note start at 1
+        points.push(futureRidePositions[index - 1]);
+        points.push(futureRidePositions[index]);
+    }
+}
 
 function createStationMesh(data: StaticData): {stationMesh: THREE.Object3D,stationMeshMap: ESMap<THREE.Object3D,Station>} {
     const allStations = new Object3D();

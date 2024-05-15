@@ -9,3 +9,7 @@ export function isDigit(s: string): boolean {
 export function inverseLerp(min:number,max:number,a:number): number {
     return (a-min)/(max-min)
 }
+
+export function lerp(min:number,max:number,a:number): number {
+    return min+a*(max-min)
+}
