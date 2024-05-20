@@ -2,8 +2,7 @@ import { FirstPersonControls } from "../jsm/flycontrols";
 
 import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderBufferGeometry, DoubleSide, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, Shape, ShapeBufferGeometry, sRGBEncoding, Vector3, WebGLRenderer } from "three";
 import { MovingLeg, PathPoint, placeRides, projectCoordsToMap, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
-import { isActiveAtTime, realPosition, trainPosition } from "../ride";
-import { asSeconds, currentDayOffset } from "../time";
+import { asSeconds, currentDayOffset, fromSeconds } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 import { ESMap } from "typescript";
 import { legLink_IterWithDistance } from "../leglink";
@@ -321,30 +320,41 @@ const stationGeometry = new CylinderBufferGeometry(stationRadius, stationRadius,
 const stationMaterial = new MeshBasicMaterial({ color: stationColor });
 
 function appendRidePointsAll(startTime: number, ride: Ride, points: Vector3[]) {
-    const futureRidePositions: Vector3[] = [];
+    let lastPoint = null;
+    let time_cutoff = fromSeconds(MAX_LOOKAHEAD_TIME_SECONDS) + startTime
 
-    for (let i = 0; i < FUTURE_ITERATIONS; i++) {
-        const time = startTime + (i * FUTURE_STEP_SECONDS * 1000);
 
-        if (!isActiveAtTime(ride, time)) {
-            break;
-        }
+    for (let index = 0; index < ride.legs.length; index++) {
+        const leg = ride.legs[index] as MovingLeg;
+        let legDistance = 0;
+        if (leg.stationary) { continue };
 
-        const trackpos = trainPosition(ride, time)
-        const posRot = realPosition(trackpos);
-        const pos = projectCoordsToMapVec3(posRot.position).setY(elevationForTime(startTime, time));
+        leg.links.forEach(link => {
+            legLink_IterWithDistance(link, (point: PathPoint, distanceTraveled: number) => {
+                const timeAtPoint = remap(distanceTraveled + legDistance, 0, leg.link_distance, leg.startTime, leg.endTime)
+                if (timeAtPoint < startTime || timeAtPoint > time_cutoff) {
+                    return
+                }
+                const coords = projectCoordsToMapVec3(point.coordinates)
+                coords.setY(elevationForTime(startTime, timeAtPoint)) // TODO, proper timing
 
-        futureRidePositions.push(pos);
+                //First run only
+                if (lastPoint === null) {
+                    lastPoint = coords;
+                    return
+                }
 
-        // Stop adding points if we're past the ride's end time
-        if (time > ride.endTime) break;
+                //Always push the two points of a line segment
+                points.push(lastPoint)
+                points.push(coords)
+
+                lastPoint = coords;
+            })
+
+            legDistance += link.Link.path.pathLength;
+        })
     }
 
-    // `futureRidePostions` is a list of points, here we take each pair and output the two vertices a line segment requires
-    for (let index = 1; index < futureRidePositions.length; index++) { // Note start at 1
-        points.push(futureRidePositions[index - 1]);
-        points.push(futureRidePositions[index]);
-    }
 }
 
 function createStationMesh(data: StaticData): { stationMesh: THREE.Object3D, stationMeshMap: ESMap<THREE.Object3D, Station> } {
