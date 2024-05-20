@@ -105,7 +105,7 @@ function parseLeg(json: LegJSON, index: number, rideJson: RideJSON, stations: Ma
     if (json.moving) {
         const link_codes = create_link_codes(json.from, json.to, json.waypoints);
         const links2 = link_codes.map(code => linkLegFromCode(links, code));
-        const link_distance = links2.reduce((acc, cur) => cur.Link.path.pathLength, 0)
+        const link_distance = links2.reduce((acc, cur) => acc + cur.Link.path.pathLength, 0)
 
         return {
             endTime: json.timeEnd,
@@ -624,6 +624,7 @@ function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLEl
         map.mapContent.plan_options.children.forEach(c => c.removeFromParent())
 
         findPath(staticData, formdata.from, formdata.to).then(res => {
+            const now = currentDayOffset();
 
             res.trips.flatMap(trip => trip.legs).map(leg => {
                 leg.from = leg.from.toLowerCase()
@@ -633,10 +634,10 @@ function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLEl
             res.trips.flatMap(trip => trip.legs).map(leg => {
                 let ride = res.rides.find(ride => ride.id.toString() == leg.id)
                 if (!ride) {
-                    console.group("Ride " + leg.id + " not found")
+                    console.groupCollapsed("Ride " + leg.id + " not found")
                     console.warn("Did not find ride for leg:")
                     console.warn(leg)
-                    console.warn("Is the timetable source up to date?")
+                    console.warn("Timetable might be out of date or train is international with missing legs")
                     console.groupEnd()
                     return false
                 }
@@ -644,7 +645,7 @@ function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLEl
                 let startIndex = ride.legs.findIndex(rideLeg => rideLeg.stationary && rideLeg.station.code === leg.from);
                 let endIndex = ride.legs.findIndex(rideLeg => rideLeg.stationary && rideLeg.station.code === leg.to);
 
-                let mesh = createTimelineSingle(ride, startIndex, endIndex);
+                let mesh = createTimelineSingle(ride, startIndex, endIndex, now);
                 map.mapContent.plan_options.add(mesh)
             })
         })

@@ -6,7 +6,8 @@ import { isActiveAtTime, realPosition, trainPosition } from "../ride";
 import { asSeconds, currentDayOffset } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 import { ESMap } from "typescript";
-import { legLink_Iter } from "../leglink";
+import { legLink_IterWithDistance } from "../leglink";
+import { remap } from "../util";
 
 const NEAR_CLIP = 0.01
 const FAR_CLIP = 200
@@ -272,35 +273,36 @@ function elevationForTime(base_time: number, current_time: number) {
     return asSeconds(height) * TIMELINE_ELEVATION_PER_SECOND
 }
 
-export function createTimelineSingle(ride: Ride, from: number, to: number) {
+export function createTimelineSingle(ride: Ride, from: number, to: number, now: number) {
     const points: Vector3[] = [];
-    let n = 0;
     let lastPoint = null;
 
     for (let index = from; index <= to && index < ride.legs.length; index++) {
         const leg = ride.legs[index] as MovingLeg;
+        let legDistance = 0;
         if (leg.stationary) { continue };
 
         leg.links.forEach(link => {
-            legLink_Iter(link, (point: PathPoint) => {
+            legLink_IterWithDistance(link, (point: PathPoint, distanceTraveled: number) => {
+                const timeAtPoint = remap(distanceTraveled + legDistance, 0, leg.link_distance, leg.startTime, leg.endTime)
                 const coords = projectCoordsToMapVec3(point.coordinates)
-                coords.setY(elevationForTime(0, n * 100000)) // TODO, proper timing
-                n++
+                coords.setY(elevationForTime(now, timeAtPoint)) // TODO, proper timing
 
+                //First run only
                 if (lastPoint === null) {
-                    //First run only
                     lastPoint = coords;
                     return
                 }
 
-                //Always push the two points of a line segment
+                //Always push the   two points of a line segment
                 points.push(lastPoint)
                 points.push(coords)
 
                 lastPoint = coords;
             })
-        })
 
+            legDistance += link.Link.path.pathLength;
+        })
     }
 
 

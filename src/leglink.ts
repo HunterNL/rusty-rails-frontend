@@ -99,3 +99,18 @@ export function legLink_Iter(link: LegLink, fn: (p: PathPoint) => any): void {
         }
     }
 }
+
+export function legLink_IterWithDistance(link: LegLink, fn: (p: PathPoint, distanceTraveled: number) => any): void {
+    if (link.reversePointOrder) {
+        for (let index = link.Link.path.points.length - 1; index >= 0; index--) {
+            const point = link.Link.path.points[index];
+            fn(point, link.Link.path.pathLength - point.start_offset);
+        }
+    } else {
+        for (let index = 0; index < link.Link.path.points.length; index++) {
+            const point = link.Link.path.points[index];
+            fn(point, point.start_offset);
+        }
+    }
+}
+

@@ -96,7 +96,7 @@ function findCurrentLink(leg: MovingLeg, coveredLegDistance: number): TrackPosit
     for (let index = 0; index < leg.links.length; index++) {
         const link = leg.links[index];
 
-        if (coveredLegDistance > distanceSum && coveredLegDistance < distanceSum + link.Link.path.pathLength) {
+        if (coveredLegDistance >= distanceSum && coveredLegDistance <= distanceSum + link.Link.path.pathLength) {
             return { leglink: link, offset: coveredLegDistance - distanceSum };
         }
         distanceSum += link.Link.path.pathLength
