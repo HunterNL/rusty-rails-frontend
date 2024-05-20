@@ -3,7 +3,7 @@ import { FirstPersonControls } from "../jsm/flycontrols";
 import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderBufferGeometry, DoubleSide, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, Shape, ShapeBufferGeometry, sRGBEncoding, Vector3, WebGLRenderer } from "three";
 import { MovingLeg, PathPoint, placeRides, projectCoordsToMap, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
 import { isActiveAtTime, realPosition, trainPosition } from "../ride";
-import { currentDayOffset } from "../time";
+import { asSeconds, currentDayOffset } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 import { ESMap } from "typescript";
 import { legLink_Iter } from "../leglink";
@@ -16,7 +16,7 @@ const LOOK_SPEED = 0.0005;
 
 const FUTURE_ITERATIONS = 30;
 const FUTURE_STEP_SECONDS = 60;
-const FUTURE_Z_STEP = 0.002;
+const TIMELINE_ELEVATION_PER_SECOND = 0.00004;
 
 const MAX_LOOKAHEAD_TIME_SECONDS = FUTURE_ITERATIONS * FUTURE_STEP_SECONDS
 
@@ -267,6 +267,11 @@ function createTimelineAll(data: StaticData): Line {
     return mesh
 }
 
+function elevationForTime(base_time: number, current_time: number) {
+    const height = current_time - base_time;
+    return asSeconds(height) * TIMELINE_ELEVATION_PER_SECOND
+}
+
 export function createTimelineSingle(ride: Ride, from: number, to: number) {
     const points: Vector3[] = [];
     let n = 0;
@@ -279,7 +284,7 @@ export function createTimelineSingle(ride: Ride, from: number, to: number) {
         leg.links.forEach(link => {
             legLink_Iter(link, (point: PathPoint) => {
                 const coords = projectCoordsToMapVec3(point.coordinates)
-                coords.setY(n * FUTURE_Z_STEP) // TODO, proper timing
+                coords.setY(elevationForTime(0, n * 100000)) // TODO, proper timing
                 n++
 
                 if (lastPoint === null) {
@@ -325,7 +330,7 @@ function appendRidePointsAll(startTime: number, ride: Ride, points: Vector3[]) {
 
         const trackpos = trainPosition(ride, time)
         const posRot = realPosition(trackpos);
-        const pos = projectCoordsToMapVec3(posRot.position).setY(i * FUTURE_Z_STEP);
+        const pos = projectCoordsToMapVec3(posRot.position).setY(elevationForTime(startTime, time));
 
         futureRidePositions.push(pos);
 
