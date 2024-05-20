@@ -16,12 +16,12 @@ export type LegLink = {
 //     for (let highIndex = 1; highIndex < pathLength; highIndex++) { // Note index starting at one
 //         const highIndex = link.Link.path[highIndex];
 //         const lowElem
-        
+
 //     }
 // }
 
 export function LegLinkFirstStation(link: LegLink): string {
-    if(link.reversePointOrder) {
+    if (link.reversePointOrder) {
         return link.Link.to
     } else {
         return link.Link.from;
@@ -29,7 +29,7 @@ export function LegLinkFirstStation(link: LegLink): string {
 }
 
 export function LegLinkLastStation(link: LegLink): string {
-    if(link.reversePointOrder) {
+    if (link.reversePointOrder) {
         return link.Link.from
     } else {
         return link.Link.to;
@@ -37,10 +37,10 @@ export function LegLinkLastStation(link: LegLink): string {
 }
 
 export function firstPosition(link: LegLink): TrackPosition {
-    if(!link.reversePointOrder) {
+    if (!link.reversePointOrder) {
         return {
-             leglink: link,
-             offset: link.Link.path.pathLength - link.Link.path.points[0].start_offset
+            leglink: link,
+            offset: link.Link.path.pathLength - link.Link.path.points[0].start_offset
         };
     } else {
         return {
@@ -51,10 +51,10 @@ export function firstPosition(link: LegLink): TrackPosition {
 }
 
 export function lastPosition(link: LegLink): TrackPosition {
-    if(!link.reversePointOrder) {
+    if (!link.reversePointOrder) {
         return {
-             leglink: link,
-             offset: link.Link.path.pathLength -  link.Link.path.points[0].start_offset
+            leglink: link,
+            offset: link.Link.path.pathLength - link.Link.path.points[0].start_offset
         };
     } else {
         return {
@@ -71,8 +71,8 @@ export function firstPoint(link: LegLink): PathPoint {
     let path = link.Link.path;
     let pathLen = path.pathLength;
 
-    if(link.reversePointOrder) {
-        return path[path.points.length-1];
+    if (link.reversePointOrder) {
+        return path[path.points.length - 1];
     } else {
         return path.points[0]
     }
@@ -81,9 +81,21 @@ export function firstPoint(link: LegLink): PathPoint {
 export function lastPoint(link: LegLink): PathPoint {
     let path = link.Link.path;
 
-    if(link.reversePointOrder) {
+    if (link.reversePointOrder) {
         return path.points[0]
     } else {
-        return path[path.points.length-1];
+        return path[path.points.length - 1];
+    }
+}
+
+export function legLink_Iter(link: LegLink, fn: (p: PathPoint) => any): void {
+    if (link.reversePointOrder) {
+        for (let index = link.Link.path.points.length - 1; index >= 0; index--) {
+            fn(link.Link.path.points[index]);
+        }
+    } else {
+        for (let index = 0; index < link.Link.path.points.length; index++) {
+            fn(link.Link.path.points[index]);
+        }
     }
 }

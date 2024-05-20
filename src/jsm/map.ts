@@ -1,11 +1,12 @@
 import { FirstPersonControls } from "../jsm/flycontrols";
 
 import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderBufferGeometry, DoubleSide, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, Shape, ShapeBufferGeometry, sRGBEncoding, Vector3, WebGLRenderer } from "three";
-import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
+import { MovingLeg, PathPoint, placeRides, projectCoordsToMap, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
 import { isActiveAtTime, realPosition, trainPosition } from "../ride";
 import { currentDayOffset } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 import { ESMap } from "typescript";
+import { legLink_Iter } from "../leglink";
 
 const NEAR_CLIP = 0.01
 const FAR_CLIP = 200
@@ -28,6 +29,13 @@ const timelineColor = new Color(0x999999).convertSRGBToLinear();
 
 const SHOW_STATS = true; // TODO Prod toggle
 
+export type MapContent = {
+    trains: Mesh,
+    stations: Object3D,
+    timeline: Line,
+    plan_options: Object3D
+}
+
 export class TrainMap {
     scene: THREE.Scene;
     renderer: THREE.WebGLRenderer;
@@ -44,6 +52,7 @@ export class TrainMap {
     stats: any
     stationMap: any;
     stationMeshMap: any;
+    mapContent: MapContent;
     constructor(private data: StaticData, document: Document, container: HTMLElement) {
         const scene = new Scene()
         const renderer = new WebGLRenderer({
@@ -52,14 +61,14 @@ export class TrainMap {
         })
         this.staticData = data
 
-        
+
         renderer.setSize(window.innerWidth, window.innerHeight)
         renderer.outputEncoding = sRGBEncoding
         container.appendChild(renderer.domElement)
 
         const camera = new PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, NEAR_CLIP, FAR_CLIP)
-        camera.position.fromArray([80.76576494808796,0.6901928260267816,7.411009962151727])
-        camera.rotation.fromArray([-1.5662642698302702,-0.970986368346586,-1.565305889572168,"XYZ"])
+        camera.position.fromArray([80.76576494808796, 0.6901928260267816, 7.411009962151727])
+        camera.rotation.fromArray([-1.5662642698302702, -0.970986368346586, -1.565305889572168, "XYZ"])
 
         // Must happen after inserting the renderer's element
         const ctrl = new FirstPersonControls(camera, renderer.domElement)
@@ -82,14 +91,14 @@ export class TrainMap {
 
         this.running = false;
 
-        this.populateScene()
+        this.mapContent = this.populateScene()
 
-        if(SHOW_STATS) {
+        if (SHOW_STATS) {
             this.stats = new Stats();
             container.appendChild(this.stats.dom)
         }
     }
-    populateScene() {
+    populateScene(): MapContent {
         const { scene, camera, data } = this
 
         // Sky
@@ -106,13 +115,13 @@ export class TrainMap {
         const map_geometry = geometryFromGeoJson(this.data.map_geo)
         grassMat.side = BackSide
         map_geometry.rotateX(Math.PI / 2)
-        const mapMesh = new Mesh(map_geometry,grassMat)
+        const mapMesh = new Mesh(map_geometry, grassMat)
         // mapMesh.translateZ(-0.00001)
         scene.add(mapMesh)
-        
+
 
         // Utrecht marker
-        const utrecht_coords = {latitude:52.09,longitude:5.111}
+        const utrecht_coords = { latitude: 52.09, longitude: 5.111 }
         const axis = new AxesHelper(.5)
         axis.position.add(projectCoordsToMapVec3(utrecht_coords))
         scene.add(axis)
@@ -125,29 +134,35 @@ export class TrainMap {
         // const help = new GridHelper(200, 64)
         // scene.add(help)
 
-        // Transit lines
+        const zeroMeridian = new ArrowHelper(new Vector3(1, 0, 0), new Vector3(0, 0, 0), 1000)
+        scene.add(zeroMeridian)
+
+        // Routes
         const lineMaterial = new LineBasicMaterial({ color: lineColor, linewidth: 10, opacity: .5, transparent: true })
         const lineGeometry = new BufferGeometry()
         lineGeometry.setFromPoints(wpToArray(data.links))
+        const routes = new LineSegments(lineGeometry, lineMaterial)
+        scene.add(routes)
 
-        const lines = new LineSegments(lineGeometry, lineMaterial)
-        scene.add(lines)
-
-        const timeLineMesh = createTimeline(data);
+        // Timeline
+        const timeLineMesh = createTimelineAll(data);
         scene.add(timeLineMesh)
 
+
+        // Train models
         const rideMesh = placeRides(data, this.instanceIdToRideMap)
         scene.add(rideMesh)
 
-
-        const {stationMesh,stationMeshMap} = createStationMesh(this.data)
+        // Stations
+        const { stationMesh, stationMeshMap } = createStationMesh(this.data)
         scene.add(stationMesh);
         this.stationMeshMap = stationMeshMap;
-        
-        
 
-        const zeroMeridian = new ArrowHelper(new Vector3(1,0,0),new Vector3(0,0,0),1000)
-        scene.add(zeroMeridian)
+        // PLan lines
+        const plans = new Object3D();
+        scene.add(plans);
+
+
 
         const raycaster = new Raycaster()
 
@@ -170,7 +185,7 @@ export class TrainMap {
 
 
             const stationCastResult = raycaster.intersectObject(stationMesh);
-            if(stationCastResult.length > 0) {
+            if (stationCastResult.length > 0) {
                 const first = stationCastResult[0];
                 const station = this.stationMeshMap.get(first.object);
                 this?.onStationClick(station)
@@ -181,13 +196,21 @@ export class TrainMap {
         // Development aid
         document.addEventListener("keydown", e => {
             if (e.key == " ") {
-                
+
                 console.log(`
             camera.position.fromArray(${JSON.stringify(camera.position.toArray())})
             camera.rotation.fromArray(${JSON.stringify(camera.rotation.toArray())})
             `)
             }
         })
+
+        return {
+            trains: rideMesh,
+            timeline: timeLineMesh,
+            stations: stationMesh,
+            plan_options: plans
+
+        }
     }
 
     handleResize() {
@@ -199,7 +222,7 @@ export class TrainMap {
     }
 
     renderOnce(dt: number) {
-        if(SHOW_STATS) {
+        if (SHOW_STATS) {
             this.stats.update();
         }
         this.ctrl.update(dt)
@@ -229,13 +252,52 @@ export class TrainMap {
 }
 
 // Creates the mesh that visualizes the future position of rides
-function createTimeline(data: StaticData): Line {
+function createTimelineAll(data: StaticData): Line {
     const { rides, links } = data
 
-    const startTime = currentDayOffset() 
+    const startTime = currentDayOffset()
     const points: Vector3[] = [];
 
-    rides.map(ride => appendRidePoints(startTime, ride, points));
+    rides.map(ride => appendRidePointsAll(startTime, ride, points));
+
+    const geometry = new BufferGeometry().setFromPoints(points)
+    const material = new LineBasicMaterial({ opacity: 0.5, color: timelineColor })
+
+    const mesh = new LineSegments(geometry, material)
+    return mesh
+}
+
+export function createTimelineSingle(ride: Ride, from: number, to: number) {
+    const points: Vector3[] = [];
+    let n = 0;
+    let lastPoint = null;
+
+    for (let index = from; index <= to && index < ride.legs.length; index++) {
+        const leg = ride.legs[index] as MovingLeg;
+        if (leg.stationary) { continue };
+
+        leg.links.forEach(link => {
+            legLink_Iter(link, (point: PathPoint) => {
+                const coords = projectCoordsToMapVec3(point.coordinates)
+                coords.setY(n * FUTURE_Z_STEP) // TODO, proper timing
+                n++
+
+                if (lastPoint === null) {
+                    //First run only
+                    lastPoint = coords;
+                    return
+                }
+
+                //Always push the two points of a line segment
+                points.push(lastPoint)
+                points.push(coords)
+
+                lastPoint = coords;
+            })
+        })
+
+    }
+
 
     const geometry = new BufferGeometry().setFromPoints(points)
     const material = new LineBasicMaterial({ opacity: 0.5, color: timelineColor })
@@ -251,7 +313,7 @@ const stationHeight = 100;
 const stationGeometry = new CylinderBufferGeometry(stationRadius, stationRadius, stationHeight, 6, 1, false).scale(stationScale, stationScale, stationScale);
 const stationMaterial = new MeshBasicMaterial({ color: stationColor });
 
-function appendRidePoints(startTime: number, ride: Ride, points: Vector3[]) {
+function appendRidePointsAll(startTime: number, ride: Ride, points: Vector3[]) {
     const futureRidePositions: Vector3[] = [];
 
     for (let i = 0; i < FUTURE_ITERATIONS; i++) {
@@ -278,7 +340,7 @@ function appendRidePoints(startTime: number, ride: Ride, points: Vector3[]) {
     }
 }
 
-function createStationMesh(data: StaticData): {stationMesh: THREE.Object3D,stationMeshMap: ESMap<THREE.Object3D,Station>} {
+function createStationMesh(data: StaticData): { stationMesh: THREE.Object3D, stationMeshMap: ESMap<THREE.Object3D, Station> } {
     const allStations = new Object3D();
     const map = new Map();
 
@@ -296,8 +358,8 @@ function createStationMesh(data: StaticData): {stationMesh: THREE.Object3D,stati
 
 }
 
-function assertEq(left,right) {
-    if(left !== right) {
+function assertEq(left, right) {
+    if (left !== right) {
         throw new Error(`Expected ${left} to equal ${right}`);
     }
 }
@@ -306,25 +368,25 @@ function geometryFromGeoJson(map_geo: any): BufferGeometry {
     assertEq(map_geo.type, "FeatureCollection")
 
     const shapes = []
-    
+
 
     map_geo.features.forEach(feature => {
         assertEq(feature.type, "Feature")
 
         feature.geometry.coordinates.forEach(geo => {
-            
+
             geo.forEach(polygon => {
                 const shape = new Shape();
-                for (let index = 0; index < polygon.length; index++) {                    
-                    const [longitude,latitude] = polygon[index];
-                    const [x,y] = projectCoordsToMap({latitude,longitude})
+                for (let index = 0; index < polygon.length; index++) {
+                    const [longitude, latitude] = polygon[index];
+                    const [x, y] = projectCoordsToMap({ latitude, longitude })
 
-                    if(index==0) {
+                    if (index == 0) {
                         shape.moveTo(x, y)
                     } else {
                         shape.lineTo(x, y)
                     }
-                    
+
                 }
                 shapes.push(shape)
             })

@@ -2,7 +2,7 @@
 import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, NearestFilter, sRGBEncoding, Texture, Vector3, Vector2 } from "three"
 import { ESMap } from "typescript"
 import { GLTFLoader } from "./jsm/GLTFLoader"
-import { TrainMap } from "./jsm/map"
+import { TrainMap, createTimelineSingle } from "./jsm/map"
 import { Sidebar } from "./sidebar"
 import { Coordinates, greatCircleDistanceCoords, joinWith, onDomReady } from "./util"
 import { createRideSideBar, createStationSidebar, renderStationPassages } from "./jsm/sidebar"
@@ -41,7 +41,27 @@ export type RideIdJSON = {
     "ride_name": null
 }
 
-export async function findPath(from: string, to: string) {
+export type trip = {
+    legs: TripLeg[]
+}
+
+export type TripLeg = {
+    from: string,
+    to: string,
+    id: string
+}
+
+export type FindPathResponseJson = {
+    trips: trip[],
+    rides: RideJSON[]
+}
+
+export type FindPathResponse = {
+    trips: trip[],
+    rides: Ride[]
+}
+
+export async function findPath(staticData: StaticData, from: string, to: string): Promise<FindPathResponse> {
 
     const base_url = new URL(API_HOST + "api/find_route");
 
@@ -49,7 +69,14 @@ export async function findPath(from: string, to: string) {
         from,
         to
     })
-    return fetch(base_url + "?" + params.toString()).then(resp => resp.json());
+    let data: FindPathResponseJson = await fetch(base_url + "?" + params.toString()).then(resp => resp.json());
+
+    console.log(data)
+
+    return {
+        trips: data.trips,
+        rides: data.rides.map(r => parseRide(r, staticData.stationMap, staticData.linkMap))
+    }
 }
 
 function parseRide(rideJson: RideJSON, stations: Map<string, Station>, links: Map<string, link>): Ride {
@@ -75,14 +102,10 @@ function create_link_codes(start: string, end: string, waypoints: string[]): str
 
 
 function parseLeg(json: LegJSON, index: number, rideJson: RideJSON, stations: Map<string, Station>, links: Map<string, link>): Leg {
-    // const common : Partial<Leg> = {
-    //     endTime: json.end,
-    //     startTime: json.start
-
-    // }
-
     if (json.moving) {
         const link_codes = create_link_codes(json.from, json.to, json.waypoints);
+        const links2 = link_codes.map(code => linkLegFromCode(links, code));
+        const link_distance = links2.reduce((acc, cur) => cur.Link.path.pathLength, 0)
 
         return {
             endTime: json.timeEnd,
@@ -91,8 +114,8 @@ function parseLeg(json: LegJSON, index: number, rideJson: RideJSON, stations: Ma
             to: json.to,
             stationary: false,
             link_codes,
-            links: link_codes.map(code => linkLegFromCode(links, code))
-            // TODO Add rideId here
+            links: links2,
+            link_distance,
         }
 
 
@@ -169,6 +192,7 @@ export type MovingLeg = {
     to: string
     links: LegLink[]
     link_codes: string[];
+    link_distance: number
     // isReversing: boolean /** If the train is progessing against the order in the related link's points */
 }
 
@@ -228,8 +252,8 @@ export function path_findOffsetPosition(path: PathPoint[], offset: number): Posi
     let latitude = lerp(lowElement.coordinates.latitude, highElement.coordinates.latitude, fraction)
     let longitude = lerp(lowElement.coordinates.longitude, highElement.coordinates.longitude, fraction)
 
-    let from = new Vector2(lowElement.coordinates.latitude,lowElement.coordinates.longitude);
-    let to = new Vector2(highElement.coordinates.latitude,highElement.coordinates.longitude);
+    let from = new Vector2(lowElement.coordinates.latitude, lowElement.coordinates.longitude);
+    let to = new Vector2(highElement.coordinates.latitude, highElement.coordinates.longitude);
 
     from.sub(to).normalize();
 
@@ -301,6 +325,7 @@ export type StaticData = {
     links: link[]
     rides: Ride[]
     stationMap: Map<string, Station>
+    linkMap: Map<string, link>,
     model: any
     map_geo: any,
     stationPassages: StationPassageRepo
@@ -399,7 +424,7 @@ function parseData(remoteData: RemoteData): StaticData {
 
 
     return {
-        links, rides, stationMap, model, map_geo: remoteData.map_geo, stationPassages: passages
+        links, rides, stationMap, model, map_geo: remoteData.map_geo, stationPassages: passages, linkMap
     }
 }
 
@@ -430,11 +455,12 @@ onDomReady(() => {
             sidebar.hide()
         }
     })
-    setupMap(sidebar).catch(e => console.error(e))
+    setupMap(sidebar).then(({ map, data }) => {
+        setupForm(data, form, trip_list, map);
+    }).catch(e => console.error(e))
 
     const form = document.getElementById("plan_form");
     const trip_list = document.getElementById("trip_list");
-    setupForm(form, trip_list);
 })
 
 
@@ -514,7 +540,7 @@ export function placeRides(data: StaticData, dataMap: ESMap<number, Ride>): THRE
     return mesh
 }
 
-async function setupMap(sidebar: Sidebar) {
+async function setupMap(sidebar: Sidebar): Promise<{ map: TrainMap, data: StaticData }> {
     const data = parseData(await getData())
     const container = document.getElementById("mapcontainer")
 
@@ -544,6 +570,8 @@ async function setupMap(sidebar: Sidebar) {
         }
 
     }
+
+    return { map: trainMap, data: data }
 }
 
 
@@ -589,12 +617,36 @@ function harvest(form: HTMLElement): Record<string, any> {
     return out
 }
 
-function setupForm(form: HTMLElement, outputElem: HTMLElement) {
+function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLElement, map: TrainMap) {
     form.addEventListener("submit", e => {
         e.preventDefault()
         let formdata = harvest(form)
-        findPath(formdata.from, formdata.to).then(res => {
-            outputElem.innerText = JSON.stringify(res);
+        map.mapContent.plan_options.children.forEach(c => c.removeFromParent())
+
+        findPath(staticData, formdata.from, formdata.to).then(res => {
+
+            res.trips.flatMap(trip => trip.legs).map(leg => {
+                leg.from = leg.from.toLowerCase()
+                leg.to = leg.to.toLowerCase()
+            })
+
+            res.trips.flatMap(trip => trip.legs).map(leg => {
+                let ride = res.rides.find(ride => ride.id.toString() == leg.id)
+                if (!ride) {
+                    console.group("Ride " + leg.id + " not found")
+                    console.warn("Did not find ride for leg:")
+                    console.warn(leg)
+                    console.warn("Is the timetable source up to date?")
+                    console.groupEnd()
+                    return false
+                }
+
+                let startIndex = ride.legs.findIndex(rideLeg => rideLeg.stationary && rideLeg.station.code === leg.from);
+                let endIndex = ride.legs.findIndex(rideLeg => rideLeg.stationary && rideLeg.station.code === leg.to);
+
+                let mesh = createTimelineSingle(ride, startIndex, endIndex);
+                map.mapContent.plan_options.add(mesh)
+            })
         })
     })
 }
