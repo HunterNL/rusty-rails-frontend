@@ -1,6 +1,6 @@
 
 import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, NearestFilter, sRGBEncoding, Texture, Vector3, Vector2, SRGBColorSpace } from "three"
-import { GLTFLoader } from "./jsm/GLTFLoader"
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { TrainMap, createTimelineSingle } from "./jsm/map"
 import { Sidebar } from "./sidebar"
 import { Coordinates, greatCircleDistanceCoords, joinWith, onDomReady } from "./util"
