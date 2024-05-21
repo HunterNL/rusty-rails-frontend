@@ -1,4 +1,4 @@
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { API_HOST, StaticData, Station } from "./app";
 import { LinkJSON, link, parseLink } from "./link";
 import { Ride, RideJSON, parseRide, trip } from "./ride";
@@ -34,7 +34,7 @@ export type RemoteData = {
     links: LinkJSON[];
     stations: Station[];
     rides: RideJSON[];
-    model: any;
+    model: GLTF;
     map_geo: any;
 };
 // Process and transform data in structures more useful locally

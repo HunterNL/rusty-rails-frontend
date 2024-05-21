@@ -1,5 +1,6 @@
 
 import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, NearestFilter, SRGBColorSpace, Texture, Vector3 } from "three"
+import { GLTF } from "three/examples/jsm/Addons.js"
 import { mercator } from "./geo"
 import { harvest } from "./harvest"
 import { TrainMap, createTimelineSingle } from "./jsm/map"
@@ -74,7 +75,7 @@ export type StaticData = {
     rides: Ride[]
     stationMap: Map<string, Station>
     linkMap: Map<string, link>,
-    model: any
+    model: GLTF,
     map_geo: any,
     stationPassages: StationPassageRepo
 }
@@ -144,15 +145,17 @@ function updateRides(mesh: InstancedMesh, data: StaticData, instanceIndexToRideM
 export function placeRides(data: StaticData, dataMap: Map<number, Ride>): InstancedMesh {
     const { rides } = data
 
-    const model = data.model
+
     const trainGeo = new BufferGeometry()
     const trainMat = new MeshBasicMaterial()
 
     const trainTexture = new Texture()
-    trainTexture.copy(model.scenes[0].children[0].material.map)
 
+    const model = data.model as any // Sadly the types aren't quite accurate
+    trainTexture.copy(model.scenes[0].children[0].material.map)
     trainGeo.copy(model.scenes[0].children[0].geometry) // Whyyyyyy
     trainMat.copy(model.scenes[0].children[0].material)
+
     trainMat.map.magFilter = NearestFilter
     trainMat.side = FrontSide
     trainMat.map = trainTexture
