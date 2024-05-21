@@ -434,6 +434,8 @@ async function getData(): Promise<RemoteData> {
     const stationspr: Promise<Station[]> = fetch(API_HOST + "data/stations.json").then(f => f.json()).then(f => f)
     const ridespr: Promise<RideJSON[]> = fetch(API_HOST + "api/activerides").then(f => f.json()).then(f => f)
 
+    // const ridespr: Promise<RideJSON[]> = fetch(API_HOST + "api/rides_all").then(f => f.json()).then(f => f)
+
     const map_geopr: Promise<object> = fetch("/data/nl_map.json").then(f => f.json())
 
     const modelLoader = new GLTFLoader()

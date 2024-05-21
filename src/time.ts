@@ -6,12 +6,16 @@ const MINUTE = SECOND * 60;
 const HOUR = MINUTE * 60;
 const DAY = HOUR * 24;
 
-export function asSeconds(a:number): number {
+export function asSeconds(a: number): number {
     return a / SECOND
 }
 
-export function fromSeconds(a:number): number {
+export function fromSeconds(a: number): number {
     return a * SECOND
+}
+
+export function fromHourSecond(hour: number, seconds: number) {
+    return hour * HOUR + seconds * SECOND
 }
 
 
@@ -27,7 +31,7 @@ export function formatDaySeconds(dayOffset_milliseconds: number): string {
     const hours = Math.floor(secondsIntoDay / HOUR)
     const secondsIntoHour = (secondsIntoDay - hours * HOUR)
     const minutes = Math.floor(secondsIntoHour / MINUTE);
-    
+
     const hourString = hours.toString(10).padStart(2, "0")
     const minuteString = minutes.toString(10).padStart(2, "0");
     return hourString + ":" + minuteString

@@ -2,7 +2,7 @@ import { FirstPersonControls } from "../jsm/flycontrols";
 
 import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderBufferGeometry, DoubleSide, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, Shape, ShapeBufferGeometry, sRGBEncoding, Vector3, WebGLRenderer } from "three";
 import { MovingLeg, PathPoint, placeRides, projectCoordsToMap, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
-import { asSeconds, currentDayOffset, fromSeconds } from "../time";
+import { asSeconds, currentDayOffset, fromHourSecond } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 import { ESMap } from "typescript";
 import { legLink_IterWithDistance } from "../leglink";
@@ -255,10 +255,15 @@ export class TrainMap {
 function createTimelineAll(data: StaticData): Line {
     const { rides, links } = data
 
+    // const startTime = fromHourSecond(0, 0);
+    // const endTime = fromHourSecond(32, 0);
+
     const startTime = currentDayOffset()
+    const endTime = startTime + fromHourSecond(1, 0);
+
     const points: Vector3[] = [];
 
-    rides.map(ride => appendRidePointsAll(startTime, ride, points));
+    rides.map(ride => appendRidePointsAll(startTime, endTime, ride, points));
 
     const geometry = new BufferGeometry().setFromPoints(points)
     const material = new LineBasicMaterial({ opacity: 0.5, color: timelineColor })
@@ -319,9 +324,9 @@ const stationHeight = 100;
 const stationGeometry = new CylinderBufferGeometry(stationRadius, stationRadius, stationHeight, 6, 1, false).scale(stationScale, stationScale, stationScale);
 const stationMaterial = new MeshBasicMaterial({ color: stationColor });
 
-function appendRidePointsAll(startTime: number, ride: Ride, points: Vector3[]) {
+function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, points: Vector3[]) {
     let lastPoint = null;
-    let time_cutoff = fromSeconds(MAX_LOOKAHEAD_TIME_SECONDS) + startTime
+    // let time_cutoff = fromSeconds(MAX_LOOKAHEAD_TIME_SECONDS) + startTime
 
 
     for (let index = 0; index < ride.legs.length; index++) {
@@ -332,7 +337,7 @@ function appendRidePointsAll(startTime: number, ride: Ride, points: Vector3[]) {
         leg.links.forEach(link => {
             legLink_IterWithDistance(link, (point: PathPoint, distanceTraveled: number) => {
                 const timeAtPoint = remap(distanceTraveled + legDistance, 0, leg.link_distance, leg.startTime, leg.endTime)
-                if (timeAtPoint < startTime || timeAtPoint > time_cutoff) {
+                if (timeAtPoint < startTime || timeAtPoint > endTime) {
                     return
                 }
                 const coords = projectCoordsToMapVec3(point.coordinates)
