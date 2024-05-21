@@ -1,7 +1,10 @@
 import { FirstPersonControls } from "../jsm/flycontrols";
 
 import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderGeometry, DoubleSide, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SRGBColorSpace, sRGBEncoding, Vector2, Vector3, WebGLRenderer } from "three";
-import { MovingLeg, PathPoint, placeRides, projectCoordsToMap, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
+import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, StaticData, Station, wpToArray } from "../app";
+import { PathPoint } from "../path";
+import { Ride } from "../ride";
+import { MovingLeg } from "../ride";
 import { asSeconds, currentDayOffset, fromHourSecond } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 import { legLink_IterWithDistance } from "../leglink";

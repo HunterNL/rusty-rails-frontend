@@ -1,4 +1,5 @@
-import { PlatformJSON, Ride, StaticData, Station } from "../app";
+import { PlatformJSON, StaticData, Station } from "../app";
+import { Ride } from "../ride";
 import { inverseLerp } from "../number";
 import { Stop, STOPTYPE } from "../stop";
 import { StationPassage, StationPassages } from "../stoprepo";
@@ -19,9 +20,9 @@ function stopDisplayTime(stop: Stop): string {
 }
 
 function stopDisplayplatform(platform: PlatformJSON): string {
-    if(!platform) return ""
-    
-    if(platform.arrival_platform == platform.departure_platform) {
+    if (!platform) return ""
+
+    if (platform.arrival_platform == platform.departure_platform) {
         return platform.arrival_platform
     } else {
         return platform.arrival_platform + "->" + platform.departure_platform
@@ -35,7 +36,7 @@ export function createRideSideBar(ride: Ride, data: StaticData): Element {
     // debugger
 
     const elem = <div class="sidebar_ride">
-        <div class="id">{ride.id.toString()}</div> 
+        <div class="id">{ride.id.toString()}</div>
         {stops.map(stop =>
             <div class="stop">
                 <div class="name">{stations.get(stop.code).name}</div>
@@ -54,20 +55,20 @@ export function createStationSidebar(station: Station): Element {
     </div>
 }
 
-function calcPassageStyle(passage: StationPassage,startTime:number, endTime: number): Partial<CSSStyleDeclaration> {
+function calcPassageStyle(passage: StationPassage, startTime: number, endTime: number): Partial<CSSStyleDeclaration> {
     let offset = inverseLerp(startTime, endTime, passage.start);
 
 
     // TODO Filter out earlier
-    if(offset<0||offset>1) {
+    if (offset < 0 || offset > 1) {
         return {
-            display:"none"
+            display: "none"
         }
     }
 
     return {
-        left: (offset*100)+"%",
-        top:"0px"
+        left: (offset * 100) + "%",
+        top: "0px"
     }
 }
 
@@ -81,12 +82,12 @@ export function renderStationPassages(passages: StationPassages, startTime: numb
                     <div class="platform_name">{platform.platform}</div>
                     <div class="platform_timeline">
                         {platform.passages.map(passage => {
-                            return <div class="timeline_item" style={calcPassageStyle(passage,startTime,endTime)}>
+                            return <div class="timeline_item" style={calcPassageStyle(passage, startTime, endTime)}>
                                 {passage.id}
                             </div>
                         })}
                     </div>
-                    
+
                 </div>
             })}
         </div>

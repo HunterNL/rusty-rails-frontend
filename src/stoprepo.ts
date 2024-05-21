@@ -1,4 +1,7 @@
-import { isStationaryLeg, Ride, RideIdJSON, Station, StationaryLeg } from "./app";
+import { Station } from "./app";
+import { Ride } from "./ride";
+import { isStationaryLeg, StationaryLeg } from "./ride";
+import { RideIdJSON } from "./ride";
 import { isDigit } from "./number";
 
 

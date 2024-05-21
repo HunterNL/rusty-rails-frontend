@@ -1,8 +1,13 @@
 import { Vector2, Vector3 } from "three";
-import { Leg, MovingLeg, Ride, StationaryLeg, TrackPosition, isMovingLeg, isStationaryLeg, path_findOffsetPosition } from "./app";
+import { TrackPosition } from "./app";
+import { path_findOffsetPosition } from "./path";
 import { LegLink, firstPoint, firstPosition, lastPoint, lastPosition } from "./leglink";
-import { Coordinates, coordinatesFromLatLng, invLerp, remap } from "./util";
+import { Coordinates, coordinatesFromLatLng, invLerp, joinWith, remap } from "./util";
 import { Stop } from "./stop";
+import { PlatformJSON, Station } from "./app";
+
+import { link, linkLegFromCode } from "./link";
+
 
 export type Position2d = {
     position: Coordinates
@@ -169,3 +174,166 @@ export function getStops(legs: Leg[]): Stop[] {
         }
     });
 }
+export type RideJSON = {
+    id: number;
+    startTime: number;
+    endTime: number;
+    distance: number;
+    dayValidity: number;
+    legs: LegJSON[];
+};
+
+export type RideIdJSON = {
+    "company_id": number;
+    "ride_id": number | null;
+    "line_id": number | null;
+    "first_stop": number;
+    "last_stop": number;
+    "ride_name": null;
+}; export type trip = {
+    legs: TripLeg[];
+};
+
+export type TripLeg = {
+    from: string;
+    to: string;
+    id: string;
+};
+/**
+ *  A segment between or at stops, specific to a single Ride
+ */
+// export type LegJSON = {
+//     start: number,
+//     end: number,
+// } & ({
+//     Stationary: string,
+//     Stoptype: number
+// }|{
+//     Moving: [string,string,string[]]
+// })
+
+
+export type LegJSON = {
+    "timeStart": number;
+    "timeEnd": number;
+    "moving": boolean;
+    "waypoints": string[] | null;
+    "from": string | null;
+    "to": string | null;
+    "stationCode": string | null;
+    "platform": PlatformJSON | null;
+    "stopType": number | null;
+
+};
+
+export type Leg = StationaryLeg | MovingLeg;
+
+export function isStationaryLeg(l: Leg): l is StationaryLeg {
+    return l.stationary;
+}
+
+export function isMovingLeg(l: Leg): l is MovingLeg {
+    return !l.stationary;
+}
+
+export type StationaryLeg = {
+    endTime: number;
+    startTime: number;
+    stationary: true;
+    station: Station;
+    stopType: number;
+    platforms: PlatformJSON;
+};
+
+export type MovingLeg = {
+    endTime: number;
+    startTime: number;
+    stationary: false;
+    from: string;
+    to: string;
+    links: LegLink[];
+    link_codes: string[];
+    link_distance: number;
+};
+export type Ride = {
+    id: number;
+    distance: number;
+    stops: Stop[];
+    startTime: number;
+    endTime: number;
+    legs: Leg[];
+};
+
+export type RideId = {
+    number: number;
+    name: string;
+    from: number;
+    to: number;
+};
+export function parseLeg(json: LegJSON, index: number, rideJson: RideJSON, stations: Map<string, Station>, links: Map<string, link>): Leg {
+    if (json.moving) {
+        const link_codes = create_link_codes(json.from, json.to, json.waypoints)
+        const links2 = link_codes.map(code => linkLegFromCode(links, code))
+        const link_distance = links2.reduce((acc, cur) => acc + cur.Link.path.pathLength, 0)
+
+        return {
+            endTime: json.timeEnd,
+            startTime: json.timeStart,
+            from: json.from,
+            to: json.to,
+            stationary: false,
+            link_codes,
+            links: links2,
+            link_distance,
+        }
+
+
+    } else {
+        return {
+            endTime: json.timeEnd,
+            startTime: json.timeStart,
+            station: stations.get(json.stationCode),
+            stationary: true,
+            stopType: json.stopType,
+            platforms: json.platform,
+        }
+
+    }
+}
+export function create_link_codes(start: string, end: string, waypoints: string[]): string[] {
+    let codes = [start, ...waypoints, end]
+    return joinWith(codes, (left, right) => {
+        return left + "_" + right
+    })
+}
+export function parseRide(rideJson: RideJSON, stations: Map<string, Station>, links: Map<string, link>): Ride {
+    let legs = rideJson.legs.map((legJson, index) => parseLeg(legJson, index, rideJson, stations, links))
+
+
+    return {
+        id: rideJson.id,
+        distance: rideJson.distance,
+        endTime: rideJson.endTime,
+        startTime: rideJson.startTime,
+        stops: getStops(legs),
+        legs,
+    }
+}
+// export function findCurrentLink(ride: Ride, rideProgress: number): [Stop, Stop, number] {
+//     const drivenDistance = ride.distance * rideProgress
+//     if (rideProgress == 1) {
+//         const len = ride.stops.length
+//         return [ride.stops[len - 1], ride.stops[len - 2], 0]
+//     }
+
+//     for (let index = 0; index < ride.stops.length; index++) {
+//         const stop = ride.stops[index]
+//         if (stop.TripDistance > drivenDistance) {
+//             const remainingDistance = stop.TripDistance - drivenDistance
+//             return [ride.stops[index - 1], ride.stops[index], remainingDistance]
+//         }
+
+//     }
+//     throw new Error("Stop not found")
+// }
+
