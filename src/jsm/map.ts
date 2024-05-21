@@ -1,13 +1,13 @@
 import { FirstPersonControls } from "../jsm/flycontrols";
 
 import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from "three";
+import Stats from 'three/addons/libs/stats.module.js';
 import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, StaticData, Station, wpToArray } from "../app";
 import { legLink_IterWithDistance } from "../leglink";
 import { PathPoint } from "../path";
 import { MovingLeg, Ride } from "../ride";
 import { asSeconds, currentDayOffset, fromHourSecond } from "../time";
 import { remap } from "../util";
-import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 
 const NEAR_CLIP = 0.01
 const FAR_CLIP = 200
