@@ -6,7 +6,7 @@
         ],
         "esModuleInterop": true,
         "target": "ES2017",
-        "moduleResolution": "Node",
+        "moduleResolution": "bundler",
         "jsx": "react",
         "jsxFactory": "JSXFactory.CreateElement",
         "sourceMap": true

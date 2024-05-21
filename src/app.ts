@@ -1,6 +1,5 @@
 
 import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, NearestFilter, sRGBEncoding, Texture, Vector3, Vector2, SRGBColorSpace } from "three"
-import { ESMap } from "typescript"
 import { GLTFLoader } from "./jsm/GLTFLoader"
 import { TrainMap, createTimelineSingle } from "./jsm/map"
 import { Sidebar } from "./sidebar"
@@ -471,7 +470,7 @@ function setupHotReload() {
     new EventSource('/esbuild').addEventListener('change', () => location.reload())
 }
 
-function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexToRideMap: ESMap<number, Ride>, currentTime: number): void {
+function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexToRideMap: Map<number, Ride>, currentTime: number): void {
     const { rides, links } = data
 
     let count = 0;
@@ -508,7 +507,7 @@ function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexT
 
 }
 
-export function placeRides(data: StaticData, dataMap: ESMap<number, Ride>): THREE.InstancedMesh {
+export function placeRides(data: StaticData, dataMap: Map<number, Ride>): THREE.InstancedMesh {
     const { rides } = data
 
     const model = data.model

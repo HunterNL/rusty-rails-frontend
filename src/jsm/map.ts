@@ -4,7 +4,6 @@ import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderGeome
 import { MovingLeg, PathPoint, placeRides, projectCoordsToMap, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
 import { asSeconds, currentDayOffset, fromHourSecond } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
-import { ESMap } from "typescript";
 import { legLink_IterWithDistance } from "../leglink";
 import { remap } from "../util";
 
@@ -363,7 +362,7 @@ function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, poi
 
 }
 
-function createStationMesh(data: StaticData): { stationMesh: THREE.Object3D, stationMeshMap: ESMap<THREE.Object3D, Station> } {
+function createStationMesh(data: StaticData): { stationMesh: THREE.Object3D, stationMeshMap: Map<THREE.Object3D, Station> } {
     const allStations = new Object3D();
     const map = new Map();
 
