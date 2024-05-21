@@ -104,7 +104,7 @@ function setupHotReload() {
     new EventSource('/esbuild').addEventListener('change', () => location.reload())
 }
 
-function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexToRideMap: Map<number, Ride>, currentTime: number): void {
+function updateRides(mesh: InstancedMesh, data: StaticData, instanceIndexToRideMap: Map<number, Ride>, currentTime: number): void {
     const { rides, links } = data
 
     let count = 0;
@@ -141,7 +141,7 @@ function updateRides(mesh: THREE.InstancedMesh, data: StaticData, instanceIndexT
 
 }
 
-export function placeRides(data: StaticData, dataMap: Map<number, Ride>): THREE.InstancedMesh {
+export function placeRides(data: StaticData, dataMap: Map<number, Ride>): InstancedMesh {
     const { rides } = data
 
     const model = data.model

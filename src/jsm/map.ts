@@ -38,9 +38,9 @@ export type MapContent = {
 }
 
 export class TrainMap {
-    scene: THREE.Scene;
-    renderer: THREE.WebGLRenderer;
-    camera: THREE.PerspectiveCamera;
+    scene: Scene;
+    renderer: WebGLRenderer;
+    camera: PerspectiveCamera;
     running: boolean;
     loopHandler: number;
     onTrainClick?: (r: Ride) => void
@@ -362,7 +362,7 @@ function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, poi
 
 }
 
-function createStationMesh(data: StaticData): { stationMesh: THREE.Object3D, stationMeshMap: Map<THREE.Object3D, Station> } {
+function createStationMesh(data: StaticData): { stationMesh: Object3D, stationMeshMap: Map<Object3D, Station> } {
     const allStations = new Object3D();
     const map = new Map();
 
