@@ -1,6 +1,6 @@
 import { FirstPersonControls } from "../jsm/flycontrols";
 
-import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderBufferGeometry, DoubleSide, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, PlaneBufferGeometry, Raycaster, Scene, Shape, ShapeBufferGeometry, sRGBEncoding, Vector3, WebGLRenderer } from "three";
+import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderGeometry, DoubleSide, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SRGBColorSpace, sRGBEncoding, Vector2, Vector3, WebGLRenderer } from "three";
 import { MovingLeg, PathPoint, placeRides, projectCoordsToMap, projectCoordsToMapVec3, Ride, StaticData, Station, wpToArray } from "../app";
 import { asSeconds, currentDayOffset, fromHourSecond } from "../time";
 import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
@@ -20,12 +20,12 @@ const TIMELINE_ELEVATION_PER_SECOND = 0.00004;
 
 const MAX_LOOKAHEAD_TIME_SECONDS = FUTURE_ITERATIONS * FUTURE_STEP_SECONDS
 
-const lineColor = new Color(0xff0000).convertSRGBToLinear()
-const stationColor = new Color(0x003082).convertSRGBToLinear()
-const grassColor = new Color(0x1B3622).convertSRGBToLinear()
-const backgroundColor = new Color(0x192F36).convertSRGBToLinear();
+const lineColor = new Color(0xff0000)//.convertSRGBToLinear()
+const stationColor = new Color(0x003082)//.convertSRGBToLinear()
+const grassColor = new Color(0x1E4D19)//.convertSRGBToLinear()
+const backgroundColor = new Color(0x002D7A)//.convertSRGBToLinear();
 
-const timelineColor = new Color(0x999999).convertSRGBToLinear();
+const timelineColor = new Color(0x999999)//.convertSRGBToLinear();
 
 const SHOW_STATS = true; // TODO Prod toggle
 
@@ -63,7 +63,8 @@ export class TrainMap {
 
 
         renderer.setSize(window.innerWidth, window.innerHeight)
-        renderer.outputEncoding = sRGBEncoding
+        renderer.outputColorSpace = SRGBColorSpace
+        // renderer.outputEncoding = sRGBEncoding
         container.appendChild(renderer.domElement)
 
         const camera = new PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, NEAR_CLIP, FAR_CLIP)
@@ -170,7 +171,7 @@ export class TrainMap {
             const x = (e.clientX / window.innerWidth) * 2 - 1;
             const y = (e.clientY / window.innerHeight) * -2 + 1;
 
-            raycaster.setFromCamera({ x, y }, camera)
+            raycaster.setFromCamera(new Vector2(x, y), camera)
             const rideCastResult = raycaster.intersectObject(rideMesh)
 
             if (rideCastResult.length > 0) {
@@ -321,7 +322,7 @@ const stationScale = 0.001
 const stationRadius = 1
 const stationHeight = 100;
 
-const stationGeometry = new CylinderBufferGeometry(stationRadius, stationRadius, stationHeight, 6, 1, false).scale(stationScale, stationScale, stationScale);
+const stationGeometry = new CylinderGeometry(stationRadius, stationRadius, stationHeight, 6, 1, false).scale(stationScale, stationScale, stationScale);
 const stationMaterial = new MeshBasicMaterial({ color: stationColor });
 
 function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, points: Vector3[]) {
@@ -417,6 +418,6 @@ function geometryFromGeoJson(map_geo: any): BufferGeometry {
         })
     })
 
-    return new ShapeBufferGeometry(shapes)
+    return new ShapeGeometry(shapes)
 }
 

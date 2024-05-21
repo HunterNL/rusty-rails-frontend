@@ -1,5 +1,5 @@
 
-import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, NearestFilter, sRGBEncoding, Texture, Vector3, Vector2 } from "three"
+import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, NearestFilter, sRGBEncoding, Texture, Vector3, Vector2, SRGBColorSpace } from "three"
 import { ESMap } from "typescript"
 import { GLTFLoader } from "./jsm/GLTFLoader"
 import { TrainMap, createTimelineSingle } from "./jsm/map"
@@ -525,7 +525,7 @@ export function placeRides(data: StaticData, dataMap: ESMap<number, Ride>): THRE
     trainMat.map = trainTexture
 
 
-    trainMat.map.encoding = sRGBEncoding
+    trainMat.map.colorSpace = SRGBColorSpace
     trainGeo.scale(TRAIN_SCALE, TRAIN_SCALE, TRAIN_SCALE)
 
     const mesh = new InstancedMesh(trainGeo, trainMat, rides.length)
