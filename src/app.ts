@@ -1,20 +1,17 @@
 
-import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, NearestFilter, sRGBEncoding, Texture, Vector3, SRGBColorSpace } from "three"
-import { TrainMap, createTimelineSingle } from "./jsm/map"
-import { Sidebar } from "./sidebar"
-import { Coordinates, joinWith, onDomReady } from "./util"
-import { createRideSideBar, createStationSidebar, renderStationPassages } from "./jsm/sidebar"
-import { isActiveAtTime, realPosition, trainPosition } from "./ride"
-import { asSeconds, currentDayOffset, fromSeconds } from "./time"
-import { StationPassageRepo } from "./stoprepo"
-import { mercator } from "./geo";
-import { link } from "./link"
-import { LegLink } from "./leglink"
-import { findPath } from "./server";
-import { Ride } from "./ride";
-import { parseData } from "./server";
-import { getData } from "./server";
+import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, NearestFilter, SRGBColorSpace, Texture, Vector3 } from "three"
+import { mercator } from "./geo"
 import { harvest } from "./harvest"
+import { TrainMap, createTimelineSingle } from "./jsm/map"
+import { createRideSideBar, createStationSidebar, renderStationPassages } from "./jsm/sidebar"
+import { LegLink } from "./leglink"
+import { link } from "./link"
+import { Ride, isActiveAtTime, realPosition, trainPosition } from "./ride"
+import { findPath, getData, parseData } from "./server"
+import { Sidebar } from "./sidebar"
+import { StationPassageRepo } from "./stoprepo"
+import { currentDayOffset, fromSeconds } from "./time"
+import { Coordinates, joinWith, onDomReady } from "./util"
 
 const TRAIN_UPDATE_INTERVAL_MS = 60
 const TRACK_SIDEWAYS_OFFSET = 2.5
@@ -89,7 +86,7 @@ onDomReady(() => {
     document.querySelectorAll("[data-action='sidebar_close']").forEach(e => e.addEventListener("click", () => sidebar.hide()))
 
     window.addEventListener("keydown", e => {
-        if (e.key == "Escape") {
+        if (e.key === "Escape") {
             sidebar.hide()
         }
     })
@@ -236,7 +233,7 @@ function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLEl
             })
 
             res.trips.flatMap(trip => trip.legs).map(leg => {
-                let ride = res.rides.find(ride => ride.id.toString() == leg.id)
+                let ride = res.rides.find(ride => ride.id.toString() === leg.id)
                 if (!ride) {
                     console.groupCollapsed("Ride " + leg.id + " not found")
                     console.warn("Did not find ride for leg:")

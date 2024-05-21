@@ -22,7 +22,7 @@ function stopDisplayTime(stop: Stop): string {
 function stopDisplayplatform(platform: PlatformJSON): string {
     if (!platform) return ""
 
-    if (platform.arrival_platform == platform.departure_platform) {
+    if (platform.arrival_platform === platform.departure_platform) {
         return platform.arrival_platform
     } else {
         return platform.arrival_platform + "->" + platform.departure_platform

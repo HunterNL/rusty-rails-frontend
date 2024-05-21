@@ -1,5 +1,5 @@
 function escapeStrings(elemOrString: Node | string): Node {
-    if (typeof elemOrString == "string") {
+    if (typeof elemOrString === "string") {
         return document.createTextNode(elemOrString)
     }
     return elemOrString
@@ -17,7 +17,7 @@ export function renderElement(tag: keyof HTMLElementTagNameMap, props: Record<st
             continue
 
         }
-        if (typeof child == "string") {
+        if (typeof child === "string") {
             elem.appendChild(document.createTextNode(child))
             continue
         }
@@ -32,15 +32,15 @@ export function renderElement(tag: keyof HTMLElementTagNameMap, props: Record<st
     }
 
     for (const [key, value] of Object.entries(props)) {
-        if (key == "innerHTML" || key == "prototype" || key == "__proto__") { // TODO Whitelist or something?
+        if (key === "innerHTML" || key === "prototype" || key === "__proto__") { // TODO Whitelist or something?
             continue
         }
-        if (key == "class") {
+        if (key === "class") {
             elem.className = value
             continue
         }
-        if(key == "style") {
-            applyElemStyle(elem,value)
+        if (key === "style") {
+            applyElemStyle(elem, value)
             continue
         }
         elem[key] = value
@@ -56,7 +56,7 @@ export const JSXFactory = {
 }
 
 function applyElemStyle(elem: HTMLElement, style: CSSStyleDeclaration) {
-    for (const [key,value] of Object.entries(style)) {
-        elem.style[key]=value
+    for (const [key, value] of Object.entries(style)) {
+        elem.style[key] = value
     }
 }

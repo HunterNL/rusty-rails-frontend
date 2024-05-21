@@ -2,8 +2,8 @@ export function remap(value: number, fromLow: number, fromHigh: number, toLow: n
     return toLow + (value - fromLow) * (toHigh - toLow) / (fromHigh - fromLow)
 }
 
-export function invLerp(value:number, low: number, high: number) {
-    return (value - low) / (high-low)
+export function invLerp(value: number, low: number, high: number) {
+    return (value - low) / (high - low)
 }
 
 export function joinWith<T, U>(r: T[], f: (a: T, B: T) => U): U[] {
@@ -15,7 +15,7 @@ export function joinWith<T, U>(r: T[], f: (a: T, B: T) => U): U[] {
 }
 
 export function onDomReady(f: () => void) {
-    if (document.readyState == "loading") {
+    if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", f)
     } else {
         f()
@@ -23,7 +23,7 @@ export function onDomReady(f: () => void) {
 }
 
 //https://stackoverflow.com/questions/27928/calculate-distance-between-two-latitude-longitude-points-haversine-formula/21623206#21623206
-export function greatCircleDistance(lat1: number, lon1: number, lat2: number, lon2: number):number {
+export function greatCircleDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     var p = 0.017453292519943295;    // Math.PI / 180
     var c = Math.cos;
     var a = 0.5 - c((lat2 - lat1) * p) / 2 +
@@ -38,10 +38,10 @@ export type Coordinates = {
     longitude: number
 }
 
-export function greatCircleDistanceCoords(a:Coordinates,b:Coordinates): number {
+export function greatCircleDistanceCoords(a: Coordinates, b: Coordinates): number {
     return greatCircleDistance(a.latitude, a.longitude, b.latitude, b.longitude)
 }
 
-export function coordinatesFromLatLng(lat:number,lon:number): Coordinates {
-    return {latitude:lat,longitude:lon}
+export function coordinatesFromLatLng(lat: number, lon: number): Coordinates {
+    return { latitude: lat, longitude: lon }
 }

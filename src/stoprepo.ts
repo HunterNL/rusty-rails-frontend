@@ -1,8 +1,6 @@
 import { Station } from "./app";
-import { Ride } from "./ride";
-import { isStationaryLeg, StationaryLeg } from "./ride";
-import { RideIdJSON } from "./ride";
 import { isDigit } from "./number";
+import { isStationaryLeg, Ride, StationaryLeg } from "./ride";
 
 
 export type PlatformPassages = {
@@ -31,7 +29,7 @@ function getInitialDigitsAsNumber(s: string): number {
         }
     }
 
-    if (out.length == 0) {
+    if (out.length === 0) {
         throw new Error("Expected numbers")
     }
 
@@ -51,7 +49,7 @@ function platformOrder(a: string, b: string): number {
     const aNum = trimPlatformToNumber(a)
     const bNum = trimPlatformToNumber(b)
 
-    if (aNum == bNum) {
+    if (aNum === bNum) {
         const aSuffix = a[a.length - 1]
         const bSuffix = b[b.length - 1]
 
@@ -70,15 +68,15 @@ function appendLeg(map: StationPassageRepo, leg: StationaryLeg, id: string) {
 
     const stationPassages = map.get(leg.station.code);
 
-    if (leg.platforms == null) {
+    if (leg.platforms === null) {
         return
     }
 
-    if (!stationPassages.platforms.find(pl => pl.platform == leg.platforms.arrival_platform)) {
+    if (!stationPassages.platforms.find(pl => pl.platform === leg.platforms.arrival_platform)) {
         stationPassages.platforms.push({ platform: leg.platforms.arrival_platform, passages: [] })
     }
 
-    let passages = stationPassages.platforms.find(pl => pl.platform == leg.platforms.arrival_platform).passages;
+    let passages = stationPassages.platforms.find(pl => pl.platform === leg.platforms.arrival_platform).passages;
 
     passages.push({ start: leg.startTime, end: leg.endTime, id }) //TODO Filter to rideId for this stop specifically
 }

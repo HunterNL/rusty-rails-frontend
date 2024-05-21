@@ -1,13 +1,8 @@
-import { Ride } from "./ride";
-import { StaticData, API_HOST } from "./app";
-import { parseRide } from "./ride";
-import { trip, RideJSON } from "./ride";
-import { Station } from "./app";
-import { LinkJSON } from "./link";
-import { parseLink } from "./link";
-import { link } from "./link";
-import { newPassageRepo } from "./stoprepo";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { API_HOST, StaticData, Station } from "./app";
+import { LinkJSON, link, parseLink } from "./link";
+import { Ride, RideJSON, parseRide, trip } from "./ride";
+import { newPassageRepo } from "./stoprepo";
 
 
 export async function findPath(staticData: StaticData, from: string, to: string): Promise<FindPathResponse> {

@@ -1,6 +1,6 @@
 import { TrackPosition } from "./app";
-import { PathPoint } from "./path";
 import { link } from "./link";
+import { PathPoint } from "./path";
 
 
 
@@ -95,6 +95,7 @@ export function legLink_Iter(link: LegLink, fn: (p: PathPoint) => any): void {
             fn(link.Link.path.points[index]);
         }
     } else {
+        // eslint-disable-next-line prefer-for-of more obivous this is just the above in reverse this way
         for (let index = 0; index < link.Link.path.points.length; index++) {
             fn(link.Link.path.points[index]);
         }
@@ -108,6 +109,7 @@ export function legLink_IterWithDistance(link: LegLink, fn: (p: PathPoint, dista
             fn(point, link.Link.path.pathLength - point.start_offset);
         }
     } else {
+        // eslint-disable-next-line prefer-for-of more obivous this is just the above in reverse this way
         for (let index = 0; index < link.Link.path.points.length; index++) {
             const point = link.Link.path.points[index];
             fn(point, point.start_offset);

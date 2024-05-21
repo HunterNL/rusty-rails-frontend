@@ -1,7 +1,6 @@
 
-import { PathJSON, pathFromCoordinateArray } from "./path";
-import { Path } from "./path";
 import { LegLink } from "./leglink";
+import { Path, PathJSON, pathFromCoordinateArray } from "./path";
 
 
 
@@ -27,7 +26,7 @@ export function linkLegFromCode(linkMap: Map<string, link>, code: string): LegLi
     }
 
     const left = code.split("_")[0]
-    const reverse = left != link.from
+    const reverse = left !== link.from
 
     return {
         Link: link,
@@ -36,7 +35,7 @@ export function linkLegFromCode(linkMap: Map<string, link>, code: string): LegLi
 }
 
 export function findLink(links: link[], a: string, b: string): link {
-    return links.find(l => (l.from == a && l.to == b) || (l.from == b && l.to == a))
+    return links.find(l => (l.from === a && l.to === b) || (l.from === b && l.to === a))
 }
 export type LinkJSON = {
     from: string

@@ -80,7 +80,7 @@ class FirstPersonControls {
 		this.verticalMax = Math.PI;
 
 		this.mouseDragOn = false;
-		
+
 		this.shiftBoostFactor = 1;
 
 		// internals
@@ -124,7 +124,7 @@ class FirstPersonControls {
 		};
 
 		this.onMouseDown = function (event) {
-			if (event.button != 2) {
+			if (event.button !== 2) {
 				return
 			}
 
@@ -150,7 +150,7 @@ class FirstPersonControls {
 		};
 
 		this.onMouseUp = function (event) {
-			if (event.button != 2) {
+			if (event.button !== 2) {
 				return
 			}
 
@@ -274,8 +274,8 @@ class FirstPersonControls {
 				}
 
 				let shiftFactor = 1;
-				
-				if(this.shiftDown) {
+
+				if (this.shiftDown) {
 					shiftFactor = this.shiftBoostFactor
 				}
 

@@ -1,12 +1,10 @@
-import { Vector2, Vector3 } from "three";
-import { TrackPosition } from "./app";
-import { path_findOffsetPosition } from "./path";
-import { LegLink, firstPoint, firstPosition, lastPoint, lastPosition } from "./leglink";
-import { Coordinates, coordinatesFromLatLng, invLerp, joinWith, remap } from "./util";
-import { Stop } from "./stop";
-import { PlatformJSON, Station } from "./app";
-
+import { Vector2 } from "three";
+import { PlatformJSON, Station, TrackPosition } from "./app";
+import { LegLink, firstPosition, lastPosition } from "./leglink";
 import { link, linkLegFromCode } from "./link";
+import { path_findOffsetPosition } from "./path";
+import { Stop } from "./stop";
+import { Coordinates, coordinatesFromLatLng, joinWith, remap } from "./util";
 
 
 export type Position2d = {
@@ -98,8 +96,7 @@ function realizeTrackPosition(pos: TrackPosition): Position2d {
 
 function findCurrentLink(leg: MovingLeg, coveredLegDistance: number): TrackPosition {
     let distanceSum = 0;
-    for (let index = 0; index < leg.links.length; index++) {
-        const link = leg.links[index];
+    for (const link of leg.links) {
 
         if (coveredLegDistance >= distanceSum && coveredLegDistance <= distanceSum + link.Link.path.pathLength) {
             return { leglink: link, offset: coveredLegDistance - distanceSum };
@@ -117,10 +114,10 @@ export function isActiveAtTime(ride: Ride, time: number): boolean {
 function trackPositionForStation(lastLeg: MovingLeg | undefined, nextLeg?: MovingLeg): TrackPosition {
     // TODO Redo and figure out rotation as well
 
-    if (lastLeg != undefined) {
+    if (lastLeg !== undefined) {
         return lastPosition(lastLeg.links[lastLeg.links.length - 1]);
     }
-    if (nextLeg != undefined) {
+    if (nextLeg !== undefined) {
         return firstPosition(lastLeg.links[0]);
     }
 

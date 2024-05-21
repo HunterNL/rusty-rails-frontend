@@ -1,14 +1,13 @@
 import { FirstPersonControls } from "../jsm/flycontrols";
 
-import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderGeometry, DoubleSide, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SRGBColorSpace, sRGBEncoding, Vector2, Vector3, WebGLRenderer } from "three";
+import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from "three";
 import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, StaticData, Station, wpToArray } from "../app";
-import { PathPoint } from "../path";
-import { Ride } from "../ride";
-import { MovingLeg } from "../ride";
-import { asSeconds, currentDayOffset, fromHourSecond } from "../time";
-import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 import { legLink_IterWithDistance } from "../leglink";
+import { PathPoint } from "../path";
+import { MovingLeg, Ride } from "../ride";
+import { asSeconds, currentDayOffset, fromHourSecond } from "../time";
 import { remap } from "../util";
+import Stats from "./stats.module.js"; // TODO Conditional import, ESBuild has some preprocessor magic for this, or maybe treeshaking works now?
 
 const NEAR_CLIP = 0.01
 const FAR_CLIP = 200
@@ -198,7 +197,7 @@ export class TrainMap {
 
         // Development aid
         document.addEventListener("keydown", e => {
-            if (e.key == " ") {
+            if (e.key === " ") {
 
                 console.log(`
             camera.position.fromArray(${JSON.stringify(camera.position.toArray())})
@@ -329,11 +328,9 @@ const stationMaterial = new MeshBasicMaterial({ color: stationColor });
 
 function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, points: Vector3[]) {
     let lastPoint = null;
-    // let time_cutoff = fromSeconds(MAX_LOOKAHEAD_TIME_SECONDS) + startTime
 
 
-    for (let index = 0; index < ride.legs.length; index++) {
-        const leg = ride.legs[index] as MovingLeg;
+    for (const leg of ride.legs as MovingLeg[]) {
         let legDistance = 0;
         if (leg.stationary) { continue };
 
@@ -406,7 +403,7 @@ function geometryFromGeoJson(map_geo: any): BufferGeometry {
                     const [longitude, latitude] = polygon[index];
                     const [x, y] = projectCoordsToMap({ latitude, longitude })
 
-                    if (index == 0) {
+                    if (index === 0) {
                         shape.moveTo(x, y)
                     } else {
                         shape.lineTo(x, y)
