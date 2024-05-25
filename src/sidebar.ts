@@ -51,12 +51,14 @@ export class Sidebar {
     }
 
     reveal(style: string) {
-        this.style=style;
+        document.documentElement.classList.add("sidebar_visible")
+        this.style = style;
         this.element.classList.add("visible")
         this.element.classList.add(style)
     }
 
     hide() {
+        document.documentElement.classList.remove("sidebar_visible")
         this.element.classList.remove("visible");
         this.element.classList.remove(this.style);
         this.style = "";

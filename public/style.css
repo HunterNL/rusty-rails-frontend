@@ -55,6 +55,10 @@ html {
     top: var(--overlay-inset);
 }
 
+.sidebar_visible #stack_left {
+    display: none;
+}
+
 #plan_bar {
     padding: 15px;
     background-color: white;
