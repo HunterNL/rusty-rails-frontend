@@ -5,8 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "esbuild ./src/app.ts --bundle --sourcemap --format=esm --platform=browser --outfile=public/app.js --keyfile=config/secret/key.pem --certfile=config/secret/cert.pem --watch --serve=127.0.0.1:3000 --servedir=public --define:DEFINE_PRODUCTION=false",
-    "lint": "oxlint --import-plugin -D suspicious -D eqeqeq -D -no-duplicates -D prefer-for-of -A jsx-key -A react-in-jsx-scope"
+    "serve": "esbuild ./src/app.ts --bundle --sourcemap --format=esm --platform=browser --outfile=public/generated/app.js --keyfile=config/secret/key.pem --certfile=config/secret/cert.pem --watch --serve=127.0.0.1:3000 --servedir=public --define:DEFINE_PRODUCTION=false",
+    "lint": "oxlint --import-plugin -D suspicious -D eqeqeq -D -no-duplicates -D prefer-for-of -A jsx-key -A react-in-jsx-scope",
+    "build": "esbuild ./src/app.ts --minify --bundle --format=esm --platform=browser --tree-shaking=true --metafile=meta.json --outfile=public/generated/app.js --define:DEFINE_PRODUCTION=true"
   },
   "author": "",
   "dependencies": {

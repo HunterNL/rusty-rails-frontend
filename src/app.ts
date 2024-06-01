@@ -3,7 +3,7 @@ import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, N
 import { GLTF } from "three/examples/jsm/Addons.js"
 import { mercator } from "./geo"
 import { harvest } from "./harvest"
-import { TrainMap, createTimelineSingle } from "./jsm/map"
+import { TrainMap, createTimelineSingle, planColor } from "./jsm/map"
 import { createRideSideBar, createStationSidebar, renderStationPassages } from "./jsm/sidebar"
 import { LegLink } from "./leglink"
 import { link } from "./link"
@@ -166,7 +166,7 @@ export function placeRides(data: StaticData, dataMap: Map<number, Ride>): Instan
 
     const mesh = new InstancedMesh(trainGeo, trainMat, rides.length)
 
-
+    // Note, this is independant from the time the Map uses
     updateRides(mesh, data, dataMap, currentDayOffset())
 
     window.setInterval((dt) => {
@@ -202,7 +202,7 @@ async function setupMap(sidebar: Sidebar): Promise<{ map: TrainMap, data: Static
         let end = now + fromSeconds(3600 * 2)
 
         if (passages) {
-            sidebar.renderIntoChild("instanceid", renderStationPassages(passages, currentDayOffset(), end))
+            sidebar.renderIntoChild("instanceid", renderStationPassages(passages, now, end))
         } else {
             sidebar.renderIntoChild("instanceid", createStationSidebar(station))
         }
@@ -228,7 +228,7 @@ function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLEl
         map.mapContent.plan_options.children.forEach(c => c.removeFromParent())
 
         findPath(staticData, formdata.from, formdata.to).then(res => {
-            const now = currentDayOffset();
+            const now = map.zeroTime
 
             res.trips.flatMap(trip => trip.legs).map(leg => {
                 leg.from = leg.from.toLowerCase()
@@ -249,7 +249,7 @@ function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLEl
                 let startIndex = ride.legs.findIndex(rideLeg => rideLeg.stationary && rideLeg.station.code === leg.from);
                 let endIndex = ride.legs.findIndex(rideLeg => rideLeg.stationary && rideLeg.station.code === leg.to);
 
-                let mesh = createTimelineSingle(ride, startIndex, endIndex, now);
+                let mesh = createTimelineSingle(ride, startIndex, endIndex, now, planColor);
                 map.mapContent.plan_options.add(mesh)
             })
         })

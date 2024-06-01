@@ -1,12 +1,12 @@
 import { FirstPersonControls } from "../jsm/flycontrols";
 
-import { ArrowHelper, AxesHelper, BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from "three";
+import { BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from "three";
 import Stats from 'three/addons/libs/stats.module.js';
 import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, StaticData, Station, wpToArray } from "../app";
 import { legLink_IterWithDistance } from "../leglink";
 import { PathPoint } from "../path";
 import { MovingLeg, Ride } from "../ride";
-import { asSeconds, currentDayOffset, fromHourSecond } from "../time";
+import { asSeconds, currentDayOffset, fromSeconds } from "../time";
 import { remap } from "../util";
 import { isProduction } from "./env";
 
@@ -28,6 +28,7 @@ const grassColor = new Color(0x1E4D19)//.convertSRGBToLinear()
 const backgroundColor = new Color(0x002D7A)//.convertSRGBToLinear();
 
 const timelineColor = new Color(0x999999)//.convertSRGBToLinear();
+export const planColor = new Color(0xFFC917);
 
 const SHOW_STATS = !isProduction(); // TODO Prod toggle
 
@@ -54,6 +55,10 @@ export class TrainMap {
     stats: any
     stationMap: any;
     stationMeshMap: any;
+
+    zeroTime: number;
+    timeSpan: number;
+
     mapContent: MapContent;
     constructor(private data: StaticData, document: Document, container: HTMLElement) {
         const scene = new Scene()
@@ -62,6 +67,8 @@ export class TrainMap {
             logarithmicDepthBuffer: true
         })
         this.staticData = data
+        this.zeroTime = currentDayOffset();
+        this.timeSpan = fromSeconds(3600 * 2)
 
 
         renderer.setSize(window.innerWidth, window.innerHeight)
@@ -107,38 +114,14 @@ export class TrainMap {
         // Sky
         scene.background = backgroundColor;
 
-        // Ground plane
-        // const infiniteplane = new PlaneBufferGeometry(1000, 1000, 1)
-        // const grass = new Mesh(infiniteplane, grassMat)
-        // grass.rotateX(-Math.PI / 2)
-        // scene.add(grass);
-
-        //NL Background
+        // NL surface
         const grassMat = new MeshBasicMaterial({ color: grassColor })
         const map_geometry = geometryFromGeoJson(this.data.map_geo)
         grassMat.side = BackSide
         map_geometry.rotateX(Math.PI / 2)
         const mapMesh = new Mesh(map_geometry, grassMat)
-        // mapMesh.translateZ(-0.00001)
         scene.add(mapMesh)
 
-
-        // Utrecht marker
-        const utrecht_coords = { latitude: 52.09, longitude: 5.111 }
-        const axis = new AxesHelper(.5)
-        axis.position.add(projectCoordsToMapVec3(utrecht_coords))
-        scene.add(axis)
-
-        // Origin marker
-        const center = new AxesHelper(1);
-        scene.add(center);
-
-        // Helper grid
-        // const help = new GridHelper(200, 64)
-        // scene.add(help)
-
-        const zeroMeridian = new ArrowHelper(new Vector3(1, 0, 0), new Vector3(0, 0, 0), 1000)
-        scene.add(zeroMeridian)
 
         // Routes
         const lineMaterial = new LineBasicMaterial({ color: lineColor, linewidth: 10, opacity: .5, transparent: true })
@@ -148,7 +131,7 @@ export class TrainMap {
         scene.add(routes)
 
         // Timeline
-        const timeLineMesh = createTimelineAll(data);
+        const timeLineMesh = createTimelineAll(data, this.zeroTime, this.zeroTime + this.timeSpan);
         scene.add(timeLineMesh)
 
 
@@ -255,14 +238,11 @@ export class TrainMap {
 }
 
 // Creates the mesh that visualizes the future position of rides
-function createTimelineAll(data: StaticData): Line {
+function createTimelineAll(data: StaticData, startTime: number, endTime: number): Line {
     const { rides, links } = data
 
     // const startTime = fromHourSecond(0, 0);
     // const endTime = fromHourSecond(32, 0);
-
-    const startTime = currentDayOffset()
-    const endTime = startTime + fromHourSecond(1, 0);
 
     const points: Vector3[] = [];
 
@@ -280,7 +260,7 @@ function elevationForTime(base_time: number, current_time: number) {
     return asSeconds(height) * TIMELINE_ELEVATION_PER_SECOND
 }
 
-export function createTimelineSingle(ride: Ride, from: number, to: number, now: number) {
+export function createTimelineSingle(ride: Ride, from: number, to: number, now: number, color: Color) {
     const points: Vector3[] = [];
     let lastPoint = null;
 
@@ -314,7 +294,7 @@ export function createTimelineSingle(ride: Ride, from: number, to: number, now: 
 
 
     const geometry = new BufferGeometry().setFromPoints(points)
-    const material = new LineBasicMaterial({ opacity: 0.5, color: timelineColor })
+    const material = new LineBasicMaterial({ opacity: 0.5, color })
 
     const mesh = new LineSegments(geometry, material)
     return mesh
