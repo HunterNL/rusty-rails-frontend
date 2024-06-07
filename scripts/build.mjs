@@ -4,6 +4,7 @@ import fs from "node:fs";
 const defines = {};
 defines.DEFINE_PRODUCTION = "true"
 defines.DEFINE_API_HOST = `"${process.env.APP_API_HOST}"` || `"https://api.dev.localhost/"`
+defines.DEFINE_CLIENT_DEBUG = "false"
 
 let result = await esbuild.build({
     bundle: true,

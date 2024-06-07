@@ -3,6 +3,7 @@ import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, N
 import { GLTF } from "three/examples/jsm/Addons.js"
 import { mercator } from "./geo"
 import { harvest } from "./harvest"
+import { isDebugEnabled } from "./jsm/env"
 import { TrainMap, createTimelineSingle, planColor } from "./jsm/map"
 import { createRideSideBar, createStationSidebar, renderStationPassages } from "./jsm/sidebar"
 import { LegLink } from "./leglink"
@@ -82,7 +83,9 @@ export type StaticData = {
 }
 
 onDomReady(() => {
-    setupHotReload()
+    if (isDebugEnabled()) {
+        setupHotReload()
+    }
 
     const sidebar = new Sidebar(document.getElementById("sidebar"))
     document.querySelectorAll("[data-action='sidebar_close']").forEach(e => e.addEventListener("click", () => sidebar.hide()))

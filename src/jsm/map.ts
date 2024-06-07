@@ -8,7 +8,7 @@ import { PathPoint } from "../path";
 import { MovingLeg, Ride } from "../ride";
 import { asSeconds, currentDayOffset, fromSeconds } from "../time";
 import { remap } from "../util";
-import { isProduction } from "./env";
+import { isDebugEnabled } from "./env";
 
 const NEAR_CLIP = 0.01
 const FAR_CLIP = 200
@@ -30,7 +30,7 @@ const backgroundColor = new Color(0x002D7A)//.convertSRGBToLinear();
 const timelineColor = new Color(0x999999)//.convertSRGBToLinear();
 export const planColor = new Color(0xFFC917);
 
-const SHOW_STATS = !isProduction(); // TODO Prod toggle
+const SHOW_STATS = isDebugEnabled();
 
 export type MapContent = {
     trains: Mesh,
