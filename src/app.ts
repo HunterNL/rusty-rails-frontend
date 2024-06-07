@@ -18,7 +18,8 @@ const TRAIN_UPDATE_INTERVAL_MS = 60
 const TRACK_SIDEWAYS_OFFSET = 2.5
 const TRAIN_SCALE = 0.0017;
 
-export const API_HOST = "https://api.dev.localhost/"
+declare var DEFINE_API_HOST //set by Esbuild
+export const API_HOST = DEFINE_API_HOST
 
 export type PlatformJSON = {
     arrival_platform: string,
