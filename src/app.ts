@@ -38,7 +38,7 @@ export type Station = {
     code: string,
     name: string,
     position: Coordinates
-
+    rank: number
 }
 
 const MAP_SCALE = 90;
@@ -98,10 +98,14 @@ onDomReady(() => {
 
 
     getData().then(parseData).then(data => {
-        const station_names = [];
+        // Create copy
+        const stations: Station[] = [];
         for (let station of data.stationMap.values()) {
-            station_names.push(station.name)
+            stations.push(station)
         }
+
+        stations.sort((a, b) => b.rank - a.rank);
+        const station_names = stations.map(s => s.name);
 
         const form = document.getElementById("plan_form");
         const trip_list = document.getElementById("trip_list")
