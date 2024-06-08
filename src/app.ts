@@ -95,12 +95,23 @@ onDomReady(() => {
             sidebar.hide()
         }
     })
-    setupMap(sidebar).then(({ map, data }) => {
-        setupForm(data, form, trip_list, map);
-    }).catch(e => console.error(e))
 
-    const form = document.getElementById("plan_form");
-    const trip_list = document.getElementById("trip_list");
+
+    getData().then(parseData).then(data => {
+        const station_names = [];
+        for (let station of data.stationMap.values()) {
+            station_names.push(station.name)
+        }
+
+        const form = document.getElementById("plan_form");
+        const trip_list = document.getElementById("trip_list")
+
+        insertDataList("station_names", station_names);
+
+        setupMap(sidebar, data).then(map => {
+            setupForm(data, form, trip_list, map);
+        }).catch(e => console.error(e))
+    })
 })
 
 
@@ -182,8 +193,7 @@ export function placeRides(data: StaticData, dataMap: Map<number, Ride>): Instan
     return mesh
 }
 
-async function setupMap(sidebar: Sidebar): Promise<{ map: TrainMap, data: StaticData }> {
-    const data = parseData(await getData())
+async function setupMap(sidebar: Sidebar, data: StaticData): Promise<TrainMap> {
     const container = document.getElementById("mapcontainer")
 
     if (!container) {
@@ -213,7 +223,7 @@ async function setupMap(sidebar: Sidebar): Promise<{ map: TrainMap, data: Static
 
     }
 
-    return { map: trainMap, data: data }
+    return trainMap
 }
 
 
@@ -223,7 +233,28 @@ function originIsolationCheck() {
     }
 }
 
+function findMapEntryByValue<K, V>(haystack: Map<K, V>, predicate: (a: V) => boolean): [K, V] | undefined {
+    for (let entry of haystack.entries()) {
+        if (predicate(entry[1]))
+            return entry
+    }
+}
+
 originIsolationCheck()
+
+function findStationCode(searchString: string, stations: Map<string, Station>): string | undefined {
+    let lowerstring = searchString.toLowerCase()
+    if (stations.has(lowerstring)) {
+        return lowerstring
+    }
+
+    let entry = findMapEntryByValue(stations, (s) => s.name.toLowerCase() == lowerstring);
+    if (entry) {
+        return entry[0]
+    }
+
+    return undefined
+}
 
 function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLElement, map: TrainMap) {
     form.addEventListener("submit", e => {
@@ -231,7 +262,20 @@ function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLEl
         let formdata = harvest(form)
         map.mapContent.plan_options.children.forEach(c => c.removeFromParent())
 
-        findPath(staticData, formdata.from, formdata.to).then(res => {
+        let from = findStationCode(formdata.from, staticData.stationMap);
+        let to = findStationCode(formdata.to, staticData.stationMap);
+
+        if (typeof from === "undefined") {
+            console.warn(from)
+            throw new Error("From station invalid")
+        }
+
+        if (typeof to === "undefined") {
+            console.warn(to)
+            throw new Error("To station invalid")
+        }
+
+        findPath(staticData, from, to).then(res => {
             const now = map.zeroTime
 
             res.trips.flatMap(trip => trip.legs).map(leg => {
@@ -259,3 +303,15 @@ function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLEl
         })
     })
 }
+function insertDataList(id: string, station_names: string[]) {
+    const list = document.createElement("datalist")
+    station_names.forEach(name => {
+        const option = document.createElement("option");
+        option.setAttribute("value", name)
+        list.appendChild(option)
+    })
+
+    list.id = id;
+    document.documentElement.appendChild(list);
+}
+

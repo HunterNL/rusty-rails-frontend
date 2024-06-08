@@ -57,25 +57,7 @@ export function parseData(remoteData: RemoteData): StaticData {
     });
 
     const rides = remoteData.rides.map(ride => parseRide(ride, stationMap, linkMap));
-
-    // rides.forEach(ride => {
-    //     ride.legs.forEach(leg => {
-    //         if ("Stationary" in leg) {
-    //             const station = stationMap.get(leg.Stationary);
-    //             if (!station) {
-    //                 throw new Error("Expected a station")
-    //             }
-    //             leg.Stationary.station = station;
-    //             return;
-    //         } 
-    //         if("Moving" in leg) {
-    //             leg.Moving.links = leg.Moving.link_codes.map(code => linkLegFromCode(linkMap, code));
-    //         }
-    //     })
-    // })
     const passages = newPassageRepo(rides);
-
-
 
     return {
         links, rides, stationMap, model, map_geo: remoteData.map_geo, stationPassages: passages, linkMap
