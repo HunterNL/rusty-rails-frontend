@@ -1,10 +1,10 @@
 import { Vector2 } from "three";
-import { PlatformJSON, Station, TrackPosition } from "./app";
+import { PlatformJSON, Station, TrackPosition } from "../app";
+import { Coordinates, coordinatesFromLatLng, joinWith, remap } from "../util";
 import { LegLink, firstPosition, lastPosition } from "./leglink";
 import { link, linkLegFromCode } from "./link";
 import { path_findOffsetPosition } from "./path";
 import { Stop } from "./stop";
-import { Coordinates, coordinatesFromLatLng, joinWith, remap } from "./util";
 
 
 export type Position2d = {

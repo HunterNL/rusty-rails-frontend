@@ -1,14 +1,14 @@
-import { FirstPersonControls } from "../jsm/flycontrols";
+import { FirstPersonControls } from "./three/flycontrols";
 
 import { BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from "three";
 import Stats from 'three/addons/libs/stats.module.js';
-import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, StaticData, Station, wpToArray } from "../app";
-import { legLink_IterWithDistance } from "../leglink";
-import { PathPoint } from "../path";
-import { MovingLeg, Ride } from "../ride";
-import { asSeconds, currentDayOffset, fromSeconds } from "../time";
-import { remap } from "../util";
+import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, StaticData, Station, wpToArray } from "./app";
 import { isDebugEnabled } from "./env";
+import { legLink_IterWithDistance } from "./rail/leglink";
+import { PathPoint } from "./rail/path";
+import { MovingLeg, Ride } from "./rail/ride";
+import { asSeconds, currentDayOffset, fromSeconds } from "./time";
+import { remap } from "./util";
 
 const NEAR_CLIP = 0.01
 const FAR_CLIP = 200

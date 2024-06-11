@@ -1,7 +1,7 @@
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { API_HOST, StaticData, Station } from "./app";
-import { LinkJSON, link, parseLink } from "./link";
-import { Ride, RideJSON, parseRide, trip } from "./ride";
+import { LinkJSON, link, parseLink } from "./rail/link";
+import { Ride, RideJSON, parseRide, trip } from "./rail/ride";
 import { newPassageRepo } from "./stoprepo";
 
 

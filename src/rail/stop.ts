@@ -2,7 +2,7 @@
  * A stop at a station, specific to a single Ride
  */
 
-import { PlatformJSON } from "./app";
+import { PlatformJSON } from "../app";
 
 export const STOPTYPE = {
     UNKNOWN: 0,

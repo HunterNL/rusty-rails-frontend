@@ -1,6 +1,6 @@
-import { Coordinates, greatCircleDistanceCoords } from "./util";
 import { Vector2 } from "three";
-import { inverseLerp, lerp } from "./number";
+import { inverseLerp, lerp } from "../number";
+import { Coordinates, greatCircleDistanceCoords } from "../util";
 import { Position2d } from "./ride";
 
 

@@ -1,6 +1,6 @@
 import { Station } from "./app";
 import { isDigit } from "./number";
-import { isStationaryLeg, Ride, StationaryLeg } from "./ride";
+import { isStationaryLeg, Ride, StationaryLeg } from "./rail/ride";
 
 
 export type PlatformPassages = {

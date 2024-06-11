@@ -1,4 +1,4 @@
-import { TrackPosition } from "./app";
+import { TrackPosition } from "../app";
 import { link } from "./link";
 import { PathPoint } from "./path";
 

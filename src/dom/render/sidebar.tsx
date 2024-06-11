@@ -1,10 +1,10 @@
-import { PlatformJSON, StaticData, Station } from "../app";
-import { Ride } from "../ride";
-import { inverseLerp } from "../number";
-import { Stop, STOPTYPE } from "../stop";
-import { StationPassage, StationPassages } from "../stoprepo";
-import { formatDaySeconds, fromSeconds } from "../time";
-import { JSXFactory } from "../tsx"
+import { PlatformJSON, StaticData, Station } from "../../app";
+import { Ride } from "../../rail/ride";
+import { inverseLerp } from "../../number";
+import { Stop, STOPTYPE } from "../../rail/stop";
+import { StationPassage, StationPassages } from "../../stoprepo";
+import { formatDaySeconds } from "../../time";
+import { JSXFactory } from "../tsx";
 
 function stopDisplayTime(stop: Stop): string {
     switch (stop.stopType) {
