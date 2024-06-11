@@ -9,7 +9,7 @@ import { createRideSideBar, createStationSidebar, renderStationPassages } from "
 import { Sidebar } from "./dom/sidebar"
 import { isDebugEnabled } from "./env"
 import { Coordinates, mercator } from "./geo"
-import { TrainMap, createTimelineSingle, planColor } from "./map"
+import { TrainMap, createTimelineSingle, cursorColor, planColor } from "./map"
 import { LegLink } from "./rail/leglink"
 import { link } from "./rail/link"
 import { Ride, isActiveAtTime, realPosition, trainPosition } from "./rail/ride"
@@ -123,6 +123,19 @@ onDomReady(() => {
         insertDataList("station_names", station_names);
 
         setupMap(sidebar, data).then(map => {
+            //Cursor timer
+            const timer = document.querySelector("[data-tag=cursor_timer]") as HTMLElement;
+            timer.style.color = "#" + cursorColor.getHexString();
+            map.onCursorTimeChange = (time) => {
+                if (typeof time === "undefined") {
+                    console.log(timer);
+                    timer.style.visibility = "hidden";
+                } else {
+                    timer.style.visibility = "visible";
+                    timer.textContent = formatDaySeconds(time)
+                }
+            }
+
             setupForm(data, form, trip_list, map);
         }).catch(e => console.error(e))
     })

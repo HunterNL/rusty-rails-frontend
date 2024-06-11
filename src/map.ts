@@ -1,6 +1,6 @@
 import { FirstPersonControls } from "./three/flycontrols";
 
-import { BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from "three";
+import { BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SphereGeometry, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from "three";
 import Stats from 'three/addons/libs/stats.module.js';
 import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, StaticData, Station, wpToArray } from "./app";
 import { isDebugEnabled } from "./env";
@@ -26,6 +26,7 @@ const lineColor = new Color(0xff0000)//.convertSRGBToLinear()
 const stationColor = new Color(0x003082)//.convertSRGBToLinear()
 const grassColor = new Color(0x1E4D19)//.convertSRGBToLinear()
 const backgroundColor = new Color(0x002D7A)//.convertSRGBToLinear();
+export const cursorColor = new Color(0xFF8552);
 
 const timelineColor = new Color(0x999999)//.convertSRGBToLinear();
 export const planColor = new Color(0xFFC917);
@@ -60,6 +61,10 @@ export class TrainMap {
     timeSpan: number;
 
     mapContent: MapContent;
+    raycaster: Raycaster;
+    cursor: Mesh;
+    cursorTime: undefined | number
+    onCursorTimeChange: undefined | ((a: number | undefined) => void)
     constructor(private data: StaticData, document: Document, container: HTMLElement) {
         const scene = new Scene()
         const renderer = new WebGLRenderer({
@@ -148,16 +153,22 @@ export class TrainMap {
         const plans = new Object3D();
         scene.add(plans);
 
+        const cursorMaterial = new MeshBasicMaterial({ color: cursorColor })
+        cursorMaterial.wireframe = true
+        cursorMaterial.opacity = 0.5
+        this.cursor = new Mesh(new SphereGeometry(0.01, 8, 8), cursorMaterial)
+        this.scene.add(this.cursor);
 
 
-        const raycaster = new Raycaster()
+        this.raycaster = new Raycaster()
+        this.raycaster.params.Line.threshold = 0.01;
 
         document.addEventListener("click", e => {
             const x = (e.clientX / window.innerWidth) * 2 - 1;
             const y = (e.clientY / window.innerHeight) * -2 + 1;
 
-            raycaster.setFromCamera(new Vector2(x, y), camera)
-            const rideCastResult = raycaster.intersectObject(rideMesh)
+            this.raycaster.setFromCamera(new Vector2(x, y), camera)
+            const rideCastResult = this.raycaster.intersectObject(rideMesh)
 
             if (rideCastResult.length > 0) {
                 const instanceId = rideCastResult[0].instanceId
@@ -170,13 +181,36 @@ export class TrainMap {
             }
 
 
-            const stationCastResult = raycaster.intersectObject(stationMesh);
+            const stationCastResult = this.raycaster.intersectObject(stationMesh);
             if (stationCastResult.length > 0) {
                 const first = stationCastResult[0];
                 const station = this.stationMeshMap.get(first.object);
                 this?.onStationClick(station)
                 return
             }
+        })
+
+        document.addEventListener("pointermove", e => {
+            const x = (e.clientX / window.innerWidth) * 2 - 1;
+            const y = (e.clientY / window.innerHeight) * -2 + 1;
+            let castResult: Parameters<typeof Raycaster.prototype.intersectObject>[2] = []; // I miss Rust's type inferrence 
+
+
+
+            this.raycaster.setFromCamera(new Vector2(x, y), camera)
+            this.raycaster.intersectObject(timeLineMesh, false, castResult)
+
+            if (castResult.length > 0) {
+                const result = castResult[0];
+                this.cursor.visible = true;
+                this.cursor.position.copy(result.point);
+                this.handleCursorChange(this.elevationToTime(result.point.y));
+            } else {
+                this.cursor.visible = false;
+                this.handleCursorChange(undefined);
+            }
+
+            castResult.length = 0; // Required when passing an array as output to intersectObject
         })
 
         // Development aid
@@ -197,6 +231,21 @@ export class TrainMap {
             plan_options: plans
 
         }
+    }
+
+    private handleCursorChange(time: number | undefined) {
+        if (time !== this.cursorTime) {
+            this.cursorTime = time;
+            this.onCursorTimeChange?.(time);
+        }
+    }
+
+    elevationToTime(y: number) {
+        const ground = elevationForTime(this.zeroTime, this.zeroTime);
+        const ceiling = elevationForTime(this.zeroTime, this.zeroTime + this.timeSpan)
+
+        console.log(ground, ceiling)
+        return remap(y, ground, ceiling, this.zeroTime, this.zeroTime + this.timeSpan) // TODO cleanup
     }
 
     handleResize() {
