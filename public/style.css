@@ -186,3 +186,8 @@ html {
     position: absolute;
     height: 100%;
 }
+
+.planner_trip {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}

@@ -1,7 +1,7 @@
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { API_HOST, StaticData, Station } from "./app";
 import { LinkJSON, link, parseLink } from "./rail/link";
-import { Ride, RideJSON, parseRide, trip } from "./rail/ride";
+import { Ride, RideJSON, Trip, parseRide } from "./rail/ride";
 import { newPassageRepo } from "./stoprepo";
 
 
@@ -22,12 +22,12 @@ export async function findPath(staticData: StaticData, from: string, to: string)
         rides: data.rides.map(r => parseRide(r, staticData.stationMap, staticData.linkMap))
     };
 } export type FindPathResponseJson = {
-    trips: trip[];
+    trips: Trip[];
     rides: RideJSON[];
 };
 
 export type FindPathResponse = {
-    trips: trip[];
+    trips: Trip[];
     rides: Ride[];
 };
 export type RemoteData = {

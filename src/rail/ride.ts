@@ -189,7 +189,8 @@ export type RideIdJSON = {
     "first_stop": number;
     "last_stop": number;
     "ride_name": null;
-}; export type trip = {
+};
+export type Trip = {
     legs: TripLeg[];
 };
 

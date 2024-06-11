@@ -4,6 +4,7 @@ import { GLTF } from "three/examples/jsm/Addons.js"
 import { joinWith } from "./array"
 import { onDomReady } from "./dom/domready"
 import { harvest } from "./dom/harvest"
+import { createTrips } from "./dom/render/planner_trips"
 import { createRideSideBar, createStationSidebar, renderStationPassages } from "./dom/render/sidebar"
 import { Sidebar } from "./dom/sidebar"
 import { isDebugEnabled } from "./env"
@@ -281,6 +282,11 @@ function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLEl
         }
 
         findPath(staticData, from, to).then(res => {
+            // Show on sidebar
+            outputElem.innerHTML = "";
+            outputElem.appendChild(createTrips(res.trips));
+
+            // Show on map
             const now = map.zeroTime
 
             res.trips.flatMap(trip => trip.legs).map(leg => {
