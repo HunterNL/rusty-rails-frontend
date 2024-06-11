@@ -15,7 +15,7 @@ import { link } from "./rail/link"
 import { Ride, isActiveAtTime, realPosition, trainPosition } from "./rail/ride"
 import { findPath, getData, parseData } from "./server"
 import { StationPassageRepo } from "./stoprepo"
-import { currentDayOffset, fromSeconds } from "./time"
+import { currentDayOffset, formatDaySeconds, fromSeconds } from "./time"
 
 const TRAIN_UPDATE_INTERVAL_MS = 60
 const TRACK_SIDEWAYS_OFFSET = 2.5
@@ -89,6 +89,14 @@ onDomReady(() => {
         setupHotReload()
     }
 
+    //Timer
+    const timer_element = document.querySelector('[data-tag=timer]');
+    if (!timer_element) {
+        throw new Error("Expected timer element")
+    }
+    setupTimer(timer_element);
+
+    // Sidebar
     const sidebar = new Sidebar(document.getElementById("sidebar"))
     document.querySelectorAll("[data-action='sidebar_close']").forEach(e => e.addEventListener("click", () => sidebar.hide()))
 
@@ -98,7 +106,7 @@ onDomReady(() => {
         }
     })
 
-
+    // Map
     getData().then(parseData).then(data => {
         // Create copy
         const stations: Station[] = [];
@@ -325,4 +333,14 @@ function insertDataList(id: string, station_names: string[]) {
     list.id = id;
     document.documentElement.appendChild(list);
 }
+
+function setupTimer(timer_element: Element) {
+    const fn = () => {
+        timer_element.textContent = formatDaySeconds(currentDayOffset());
+    };
+
+    const _interval = window.setInterval(fn, 1000)
+    fn()
+}
+
 

@@ -18,7 +18,6 @@ export function fromHourSecond(hour: number, seconds: number) {
     return hour * HOUR + seconds * SECOND
 }
 
-
 export function currentDayOffset(): number {
     // TODO Timezone awareness, dayoffset should always be Europe/Amsterdam
     const localMidnight = startOfDay(new Date());
