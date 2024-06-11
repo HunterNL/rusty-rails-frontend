@@ -1,6 +1,8 @@
 import { Vector2 } from "three";
 import { PlatformJSON, Station, TrackPosition } from "../app";
-import { Coordinates, coordinatesFromLatLng, joinWith, remap } from "../util";
+import { joinWith } from "../array";
+import { Coordinates, coordinatesFromLatLng } from "../geo";
+import { remap } from "../number";
 import { LegLink, firstPosition, lastPosition } from "./leglink";
 import { link, linkLegFromCode } from "./link";
 import { path_findOffsetPosition } from "./path";

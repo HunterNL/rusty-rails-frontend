@@ -1,11 +1,13 @@
 
 import { BufferGeometry, FrontSide, InstancedMesh, Matrix4, MeshBasicMaterial, NearestFilter, SRGBColorSpace, Texture, Vector3 } from "three"
 import { GLTF } from "three/examples/jsm/Addons.js"
+import { joinWith } from "./array"
+import { onDomReady } from "./dom/domready"
 import { harvest } from "./dom/harvest"
 import { createRideSideBar, createStationSidebar, renderStationPassages } from "./dom/render/sidebar"
 import { Sidebar } from "./dom/sidebar"
 import { isDebugEnabled } from "./env"
-import { mercator } from "./geo"
+import { Coordinates, mercator } from "./geo"
 import { TrainMap, createTimelineSingle, planColor } from "./map"
 import { LegLink } from "./rail/leglink"
 import { link } from "./rail/link"
@@ -13,7 +15,6 @@ import { Ride, isActiveAtTime, realPosition, trainPosition } from "./rail/ride"
 import { findPath, getData, parseData } from "./server"
 import { StationPassageRepo } from "./stoprepo"
 import { currentDayOffset, fromSeconds } from "./time"
-import { Coordinates, joinWith, onDomReady } from "./util"
 
 const TRAIN_UPDATE_INTERVAL_MS = 60
 const TRACK_SIDEWAYS_OFFSET = 2.5

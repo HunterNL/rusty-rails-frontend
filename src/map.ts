@@ -4,11 +4,11 @@ import { BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMater
 import Stats from 'three/addons/libs/stats.module.js';
 import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, StaticData, Station, wpToArray } from "./app";
 import { isDebugEnabled } from "./env";
+import { remap } from "./number";
 import { legLink_IterWithDistance } from "./rail/leglink";
 import { PathPoint } from "./rail/path";
 import { MovingLeg, Ride } from "./rail/ride";
 import { asSeconds, currentDayOffset, fromSeconds } from "./time";
-import { remap } from "./util";
 
 const NEAR_CLIP = 0.01
 const FAR_CLIP = 200
