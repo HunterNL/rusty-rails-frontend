@@ -12,7 +12,7 @@ import { Coordinates, mercator } from "./geo"
 import { TrainMap, createTimelineSingle, cursorColor, planColor } from "./map"
 import { LegLink } from "./rail/leglink"
 import { link } from "./rail/link"
-import { Ride, isActiveAtTime, realPosition, trainPosition } from "./rail/ride"
+import { Ride, Trip, isActiveAtTime, realPosition, ride_stopIndexbyCode, trainPosition } from "./rail/ride"
 import { findPath, getData, parseData } from "./server"
 import { StationPassageRepo } from "./stoprepo"
 import { currentDayOffset, formatDaySeconds, fromSeconds } from "./time"
@@ -303,9 +303,11 @@ function setupForm(staticData: StaticData, form: HTMLElement, outputElem: HTMLEl
         }
 
         findPath(staticData, from, to).then(res => {
+            let validTrips = joinTripsWithRides(res.trips, res.rides);
+
             // Show on sidebar
             outputElem.innerHTML = "";
-            outputElem.appendChild(createTrips(res.trips));
+            outputElem.appendChild(createTrips(validTrips));
 
             // Show on map
             const now = map.zeroTime
@@ -356,4 +358,26 @@ function setupTimer(timer_element: Element) {
     fn()
 }
 
+export type TripRideLeg = {
+    ride: Ride,
+    from: number
+    to: number
+}
+
+function joinRides(trip: Trip, rides: Ride[]): TripRideLeg[] {
+    return trip.legs.map(leg => {
+        let ride = rides.find(r => r.id.toString() === leg.id);
+        let from = ride_stopIndexbyCode(ride, leg.from.toLowerCase())
+        let to = ride_stopIndexbyCode(ride, leg.to.toLowerCase());
+
+        return { ride, from, to }
+    })
+}
+
+function joinTripsWithRides(trips: Trip[], rides: Ride[]): TripRideLeg[][] {
+    // Filter out trips that miss rides
+    const valid_trips = trips.filter(trip => trip.legs.every(leg => rides.some(ride => ride.id.toString() === leg.id)));
+
+    return valid_trips.map(trip => joinRides(trip, rides))
+}
 

@@ -319,6 +319,14 @@ export function parseRide(rideJson: RideJSON, stations: Map<string, Station>, li
         legs,
     }
 }
+
+export function ride_stopIndexbyCode(ride: Ride, code: string): number {
+    return ride.legs.findIndex(leg => leg.stationary && leg.station.code.toLowerCase() === code);
+}
+
+export function ride_stopbyCode(ride: Ride, code: string): Leg | undefined {
+    return ride.legs.find(leg => leg.stationary && leg.station.code.toLowerCase() === code);
+}
 // export function findCurrentLink(ride: Ride, rideProgress: number): [Stop, Stop, number] {
 //     const drivenDistance = ride.distance * rideProgress
 //     if (rideProgress == 1) {

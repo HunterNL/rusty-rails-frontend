@@ -221,3 +221,21 @@ html {
     margin-right: auto;
     text-align: center;
 }
+
+.planner_trip {
+    display: flex;
+    justify-content: space-between;
+}
+
+.planner_trip__time {
+    flex-grow: 1;
+}
+
+.planner_trip__time:last-of-type {
+    text-align: right;
+}
+
+.planner_trip__waypoint {
+    width: 10%;
+    flex-grow: 0;
+}
