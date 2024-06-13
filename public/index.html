@@ -25,14 +25,19 @@
         <div id="stack_left">
             <div class="map_overlay">
                 <form id="plan_form" action="">
-                    <input data-field='from' type="text" list="station_names">
-                    <input data-field='to' type="text" list="station_names">
+                    <div class="labeled_text">><label><span>From:</span> <input data-field='from' type="text"
+                                list="station_names" placeholder="Amsterdam Centraal"></label></div>
+                    <div class="labeled_text">
+                        <label><span>To:</span><input data-field='to' type="text" list="station_names"
+                                placeholder="Rotterdam Centraal">
+                        </label>
+                    </div>
                     <input type="submit" value="Send">
                 </form>
             </div>
 
             <div class="map_overlay">
-                <div id="trip_list">Blahblah</div>
+                <div id="trip_list"></div>
             </div>
         </div>
         <div class="bottom_right">

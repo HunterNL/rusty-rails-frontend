@@ -239,3 +239,12 @@ html {
     width: 10%;
     flex-grow: 0;
 }
+
+.labeled_text label {
+    display: flex;
+}
+
+.labeled_text label span {
+    flex-basis: 20%;
+    text-align: right;
+}
