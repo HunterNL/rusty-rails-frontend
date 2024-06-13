@@ -244,7 +244,6 @@ export class TrainMap {
         const ground = elevationForTime(this.zeroTime, this.zeroTime);
         const ceiling = elevationForTime(this.zeroTime, this.zeroTime + this.timeSpan)
 
-        console.log(ground, ceiling)
         return remap(y, ground, ceiling, this.zeroTime, this.zeroTime + this.timeSpan) // TODO cleanup
     }
 

@@ -128,7 +128,6 @@ onDomReady(() => {
             timer.style.color = "#" + cursorColor.getHexString();
             map.onCursorTimeChange = (time) => {
                 if (typeof time === "undefined") {
-                    console.log(timer);
                     timer.style.visibility = "hidden";
                 } else {
                     timer.style.visibility = "visible";
