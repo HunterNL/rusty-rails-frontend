@@ -15,6 +15,7 @@
     "three": "^0.162.0"
   },
   "devDependencies": {
+    "@types/geojson": "^7946.0.14",
     "@types/three": "^0.162.0",
     "@types/webxr": "^0.5.16",
     "esbuild": "^0.21.3",

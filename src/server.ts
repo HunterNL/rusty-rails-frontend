@@ -70,7 +70,7 @@ export async function getData(): Promise<RemoteData> {
     const ridespr: Promise<RideJSON[]> = fetch(API_HOST + "api/activerides_timespan").then(f => f.json()).then(f => f);
 
     // const ridespr: Promise<RideJSON[]> = fetch(API_HOST + "api/rides_all").then(f => f.json()).then(f => f)
-    const map_geopr: Promise<object> = fetch("/data/nl_map.json").then(f => f.json());
+    const map_geopr: Promise<object> = fetch("/data/map.json").then(f => f.json());
 
     const modelLoader = new GLTFLoader();
     const modelpr = modelLoader.loadAsync("/assets/lowpolytrain.glb");

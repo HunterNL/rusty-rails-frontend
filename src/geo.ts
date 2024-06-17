@@ -1,4 +1,4 @@
-export function mercator(lat: number, lon: number) {
+export function mercator(lat: number, lon: number): [number, number] {
     return [toRad(lat), Math.log(Math.tan(Math.PI / 4 + toRad(lon) / 2))];
 }
 

@@ -1,8 +1,11 @@
 import { FirstPersonControls } from "./three/flycontrols";
 
-import { BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, PerspectiveCamera, Raycaster, Scene, Shape, ShapeGeometry, SphereGeometry, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from "three";
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+
+import { GeometryCollection, MultiPolygon, Position } from "geojson";
+import { BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, Path, PerspectiveCamera, Raycaster, SRGBColorSpace, Scene, Shape, ShapeGeometry, SphereGeometry, Vector2, Vector3, WebGLRenderer } from "three";
 import Stats from 'three/addons/libs/stats.module.js';
-import { placeRides, projectCoordsToMap, projectCoordsToMapVec3, StaticData, Station, wpToArray } from "./app";
+import { StaticData, Station, placeRides, projectCoordsToMap, projectCoordsToMapVec3, wpToArray } from "./app";
 import { isDebugEnabled } from "./env";
 import { remap } from "./number";
 import { legLink_IterWithDistance } from "./rail/leglink";
@@ -415,37 +418,56 @@ function assertEq(left, right) {
     }
 }
 
-function geometryFromGeoJson(map_geo: any): BufferGeometry {
-    assertEq(map_geo.type, "FeatureCollection")
+function geometryFromGeoJson(map_geo: GeometryCollection): BufferGeometry {
+    assertEq(map_geo.type, "GeometryCollection")
 
-    const shapes = []
+    let out = map_geo.geometries.map(feature => {
+        assertEq(feature.type, "MultiPolygon")
 
+        feature = feature as MultiPolygon;
 
-    map_geo.features.forEach(feature => {
-        assertEq(feature.type, "Feature")
-
-        feature.geometry.coordinates.forEach(geo => {
-
-            geo.forEach(polygon => {
-                const shape = new Shape();
-                for (let index = 0; index < polygon.length; index++) {
-                    const [longitude, latitude] = polygon[index];
-                    const [x, y] = projectCoordsToMap({ latitude, longitude })
-
-                    if (index === 0) {
-                        shape.moveTo(x, y)
-                    } else {
-                        shape.lineTo(x, y)
-                    }
-
-                }
-                shapes.push(shape)
-            })
-
-
-        })
+        const shapes: ShapeGeometry[] = feature.coordinates.map(polygonToShape)
+        return BufferGeometryUtils.mergeGeometries(shapes)
     })
 
-    return new ShapeGeometry(shapes)
+    return out[0]
 }
 
+function polygonToShape(polygon: Position[][]): ShapeGeometry {
+    const shape = polygon[0];
+    const holes = polygon.slice(1);
+
+    const geo = new Shape();
+
+    for (let index = 0; index < shape.length; index++) {
+        const [longitude, latitude] = shape[index];
+        const [x, y] = projectCoordsToMap({ latitude, longitude });
+
+        if (index === 0) {
+            geo.moveTo(x, y)
+        } else {
+            geo.lineTo(x, y)
+        }
+    }
+
+    geo.holes = holes.map(coordsToPath)
+
+    return new ShapeGeometry(geo)
+}
+
+function coordsToPath(path: Position[]): Path {
+    const p = new Path();
+    for (let index = 0; index < path.length; index++) {
+        const [longitude, latitude] = path[index];
+        const [x, y] = projectCoordsToMap({ latitude, longitude });
+
+        if (index === 0) {
+            p.moveTo(x, y)
+        } else {
+            p.lineTo(x, y)
+        }
+
+    }
+
+    return p
+}
