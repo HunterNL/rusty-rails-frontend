@@ -60,8 +60,8 @@ export class TrainMap {
     stationMap: any;
     stationMeshMap: any;
 
-    zeroTime: number;
-    timeSpan: number;
+    zeroTime: number; // starttime of view, as dayoffset
+    timeSpan: number; // duration of view, as dayoffset
 
     mapContent: MapContent;
     raycaster: Raycaster;
@@ -148,7 +148,8 @@ export class TrainMap {
         scene.add(rideMesh)
 
         // Stations
-        const { stationMesh, stationMeshMap } = createStationMesh(this.data)
+        const maxElevation = asSeconds(this.timeSpan) * TIMELINE_ELEVATION_PER_SECOND;
+        const { stationMesh, stationMeshMap } = createStationMesh(this.data, maxElevation)
         scene.add(stationMesh);
         this.stationMeshMap = stationMeshMap;
 
@@ -351,11 +352,7 @@ export function createTimelineSingle(ride: Ride, from: number, to: number, now: 
     return mesh
 }
 
-const stationScale = 0.001
-const stationRadius = 1
-const stationHeight = 100;
-
-const stationGeometry = new CylinderGeometry(stationRadius, stationRadius, stationHeight, 6, 1, false).scale(stationScale, stationScale, stationScale);
+const stationRadius = 0.001
 const stationMaterial = new MeshBasicMaterial({ color: stationColor });
 
 function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, points: Vector3[]) {
@@ -394,13 +391,16 @@ function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, poi
 
 }
 
-function createStationMesh(data: StaticData): { stationMesh: Object3D, stationMeshMap: Map<Object3D, Station> } {
+function createStationMesh(data: StaticData, height: number): { stationMesh: Object3D, stationMeshMap: Map<Object3D, Station> } {
     const allStations = new Object3D();
     const map = new Map();
+
+    const stationGeometry = new CylinderGeometry(stationRadius, stationRadius, height, 6, 1, false);
 
     for (const station of data.stationMap.values()) {
         const mesh = new Mesh(stationGeometry, stationMaterial)
         mesh.position.add(projectCoordsToMapVec3(station.position))
+        mesh.position.add(new Vector3(0, height / 2, 0))
         allStations.add(mesh)
         map.set(mesh, station)
     }
