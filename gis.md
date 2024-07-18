@@ -7,3 +7,5 @@ Map workflow:
 - Simplify, play around with the slider, the goal is to hide all tiny messy details and reduce filesize a bit
 - Repair intersections
 - Export as geojson
+
+https://esrinl-content.maps.arcgis.com/home/item.html?id=42305ab1704b4fb28ee74b0d0a157b17 bebouwde kom
