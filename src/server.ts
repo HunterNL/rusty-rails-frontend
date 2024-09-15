@@ -35,6 +35,7 @@ export type RemoteData = {
     stations: Station[];
     rides: RideJSON[];
     model: GLTF;
+    locations: string[];
     map_geo: any;
 };
 // Process and transform data in structures more useful locally
@@ -56,7 +57,8 @@ export function parseData(remoteData: RemoteData): StaticData {
         linkMap.set(key2.toLowerCase(), l);
     });
 
-    const rides = remoteData.rides.map(ride => parseRide(ride, stationMap, linkMap));
+    const rides = remoteData.rides.map(ride => parseRide(ride, stationMap, linkMap, remoteData.locations));
+
     const passages = newPassageRepo(rides);
 
     return {
@@ -67,6 +69,7 @@ export function parseData(remoteData: RemoteData): StaticData {
 export async function getData(): Promise<RemoteData> {
     const linkspr: Promise<link[]> = fetch(API_HOST + "data/links.json").then(f => f.json()).then(f => f);
     const stationspr: Promise<Station[]> = fetch(API_HOST + "data/stations.json").then(f => f.json()).then(f => f);
+    const locationspr: Promise<string[]> = fetch(API_HOST + "data/location_map.json").then(f => f.json()).then(f => f);
     const ridespr: Promise<RideJSON[]> = fetch(API_HOST + "api/activerides_timespan").then(f => f.json()).then(f => f);
 
     // const ridespr: Promise<RideJSON[]> = fetch(API_HOST + "api/rides_all").then(f => f.json()).then(f => f)
@@ -75,8 +78,8 @@ export async function getData(): Promise<RemoteData> {
     const modelLoader = new GLTFLoader();
     const modelpr = modelLoader.loadAsync("/assets/lowpolytrain.glb");
 
-    let [links, stations, rides, model, map_geo] = await Promise.all([linkspr, stationspr, ridespr, modelpr, map_geopr]);
+    let [links, stations, rides, model, map_geo, locations] = await Promise.all([linkspr, stationspr, ridespr, modelpr, map_geopr, locationspr]);
 
-    return { links, stations, rides, model, map_geo };
+    return { links, stations, rides, model, map_geo, locations };
 }
 
