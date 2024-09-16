@@ -19,7 +19,7 @@ export async function findPath(staticData: StaticData, from: string, to: string)
 
     return {
         trips: data.trips,
-        rides: data.rides.map(r => parseRide(r, staticData.stationMap, staticData.linkMap))
+        rides: data.rides.map(r => parseRide(r, staticData.stationMap, staticData.linkMap, staticData.locations))
     };
 } export type FindPathResponseJson = {
     trips: Trip[];
@@ -41,7 +41,7 @@ export type RemoteData = {
 // Process and transform data in structures more useful locally
 export function parseData(remoteData: RemoteData): StaticData {
     const { model } = remoteData;
-    const links = remoteData.links.map(parseLink);
+    const links = remoteData.links.map(l => parseLink(l, remoteData.locations));
 
     const stationMap = new Map<string, Station>();
     remoteData.stations.forEach(station => {
@@ -62,7 +62,7 @@ export function parseData(remoteData: RemoteData): StaticData {
     const passages = newPassageRepo(rides);
 
     return {
-        links, rides, stationMap, model, map_geo: remoteData.map_geo, stationPassages: passages, linkMap
+        links, rides, stationMap, model, map_geo: remoteData.map_geo, stationPassages: passages, linkMap, locations: remoteData.locations
     };
 }
 // Fetch remote data in parallel 

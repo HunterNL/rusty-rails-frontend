@@ -12,10 +12,12 @@ export type link = {
     to: string;
     path: Path;
 };
-export function parseLink(json: LinkJSON): link {
+export function parseLink(json: LinkJSON, locations: string[]): link {
+    const from = locations[json.from];
+    const to = locations[json.to];
     return {
-        from: json.from,
-        to: json.to,
+        from: from,
+        to: to,
         path: pathFromCoordinateArray(json.path.points.map(a => a.coordinates))
     }
 }

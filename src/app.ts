@@ -75,6 +75,7 @@ export function wpToArray(links: link[]): Vector3[] {
 }
 
 export type StaticData = {
+    locations: string[]
     links: link[]
     rides: Ride[]
     stationMap: Map<string, Station>

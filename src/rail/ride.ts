@@ -217,9 +217,9 @@ export type LegJSON = {
     "timeStart": number;
     "timeEnd": number;
     "moving": boolean;
-    "waypoints": string[] | null;
-    "from": string | null;
-    "to": string | null;
+    "waypoints": number[] | null;
+    "from": number | null;
+    "to": number | null;
     "stationCode": number | null;
     "platform": PlatformJSON | null;
     "stopType": number | null;
@@ -271,18 +271,20 @@ export type RideId = {
     to: number;
 };
 export function parseLeg(json: LegJSON, index: number, rideJson: RideJSON, stations: Map<string, Station>, links: Map<string, link>, locations: string[]): Leg {
+    const from = locations[json.from];
+    const to = locations[json.to]
+    let waypoints = json.waypoints.map(wp => locations[wp]);
 
     if (json.moving) {
-
-        const link_codes = create_link_codes(json.from, json.to, json.waypoints)
+        const link_codes = create_link_codes(from, to, waypoints)
         const links2 = link_codes.map(code => linkLegFromCode(links, code))
         const link_distance = links2.reduce((acc, cur) => acc + cur.Link.path.pathLength, 0)
 
         return {
             endTime: json.timeEnd,
             startTime: json.timeStart,
-            from: json.from,
-            to: json.to,
+            from: from,
+            to: to,
             stationary: false,
             link_codes,
             links: links2,
