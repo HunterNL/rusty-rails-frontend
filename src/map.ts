@@ -237,6 +237,11 @@ export class TrainMap {
         }
     }
 
+    setLineStyle(value: any) {
+        console.log(value);
+        // throw new Error("Method not implemented.");
+    }
+
     private handleCursorChange(time: number | undefined) {
         if (time !== this.cursorTime) {
             this.cursorTime = time;

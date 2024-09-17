@@ -1,5 +1,5 @@
 import { Vector2 } from "three";
-import { PlatformJSON, Station, TrackPosition } from "../app";
+import { Company, PlatformJSON, Station, TrackPosition } from "../app";
 import { joinWith } from "../array";
 import { Coordinates, coordinatesFromLatLng } from "../geo";
 import { remap } from "../number";
@@ -179,6 +179,7 @@ export type RideJSON = {
     endTime: number;
     distance: number;
     dayValidity: number;
+    operator: string;
     legs: LegJSON[];
 };
 
@@ -256,6 +257,7 @@ export type MovingLeg = {
     link_distance: number;
 };
 export type Ride = {
+    operator: string
     id: number;
     distance: number;
     stops: Stop[];
@@ -310,12 +312,13 @@ export function create_link_codes(start: string, end: string, waypoints: string[
         return left + "_" + right
     })
 }
-export function parseRide(rideJson: RideJSON, stations: Map<string, Station>, links: Map<string, link>, locations: string[]): Ride {
+export function parseRide(rideJson: RideJSON, stations: Map<string, Station>, links: Map<string, link>, locations: string[], company_map: Record<string, Company>): Ride {
     let legs = rideJson.legs.map((legJson, index) => parseLeg(legJson, index, rideJson, stations, links, locations))
 
 
     return {
         id: rideJson.id,
+        operator: company_map[rideJson.operator].name,
         distance: rideJson.distance,
         endTime: rideJson.endTime,
         startTime: rideJson.startTime,

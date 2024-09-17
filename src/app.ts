@@ -74,7 +74,14 @@ export function wpToArray(links: link[]): Vector3[] {
     return a.flat(2);
 }
 
+export type Company = {
+    name: string
+    code: string,
+    id: string
+}
+
 export type StaticData = {
+    companies: Record<string, Company>
     locations: string[]
     links: link[]
     rides: Ride[]
@@ -83,6 +90,13 @@ export type StaticData = {
     model: GLTF,
     map_geo: any,
     stationPassages: StationPassageRepo
+}
+
+function setupControlPanel(map: TrainMap) {
+
+    document.querySelector("[data-field='line_color']").addEventListener("change", e => {
+        map.setLineStyle(e.target.value);
+    })
 }
 
 onDomReady(() => {
@@ -137,7 +151,13 @@ onDomReady(() => {
             }
 
             setupForm(data, form, trip_list, map);
+            setupControlPanel(map)
         }).catch(e => console.error(e))
+    })
+
+    // Settings panel
+    document.querySelector("[data-field='line_color']").addEventListener("change", e => {
+
     })
 })
 
