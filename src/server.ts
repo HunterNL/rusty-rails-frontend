@@ -80,7 +80,7 @@ export function parseData(remoteData: RemoteData): StaticData {
 export async function getData(): Promise<RemoteData> {
     const linkspr: Promise<link[]> = fetch(API_HOST + "data/links.json").then(f => f.json()).then(f => f);
     const stationspr: Promise<Station[]> = fetch(API_HOST + "data/stations.json").then(f => f.json()).then(f => f);
-    const companypr: Promise<CompanyJSON[]> = fetch(API_HOST + "data/company_map.json").then(f => f.json()).then(f => f);
+    const companypr: Promise<Company[]> = fetch(API_HOST + "data/company_map.json").then(f => f.json()).then(f => f);
     const locationspr: Promise<string[]> = fetch(API_HOST + "data/location_map.json").then(f => f.json()).then(f => f);
     const ridespr: Promise<RideJSON[]> = fetch(API_HOST + "api/activerides_timespan").then(f => f.json()).then(f => f);
 

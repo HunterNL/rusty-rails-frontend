@@ -3,7 +3,7 @@ import { FirstPersonControls } from "./three/flycontrols";
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 import { GeometryCollection, MultiPolygon, Position } from "geojson";
-import { BackSide, BufferGeometry, Color, CylinderGeometry, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, Path, PerspectiveCamera, Raycaster, SRGBColorSpace, Scene, Shape, ShapeGeometry, SphereGeometry, Vector2, Vector3, WebGLRenderer } from "three";
+import { BackSide, BufferAttribute, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, Path, PerspectiveCamera, Raycaster, SRGBColorSpace, Scene, Shape, ShapeGeometry, SphereGeometry, Vector2, Vector3, WebGLRenderer } from "three";
 import Stats from 'three/addons/libs/stats.module.js';
 import { StaticData, Station, placeRides, projectCoordsToMap, projectCoordsToMapVec3, wpToArray } from "./app";
 import { isDebugEnabled } from "./env";
@@ -295,6 +295,16 @@ export class TrainMap {
 }
 
 // Creates the mesh that visualizes the future position of rides
+
+function createColorAtrribute(colors: Color[]): BufferAttribute {
+    let buf = [];
+    for (let i = 0; i < colors.length; i++) {
+        const color = colors[i];
+        buf.push(...color.toArray())
+    }
+
+    return new Float32BufferAttribute(buf, 3);
+}
 function createTimelineAll(data: StaticData, startTime: number, endTime: number): Line {
     const { rides, links } = data
 
@@ -302,13 +312,15 @@ function createTimelineAll(data: StaticData, startTime: number, endTime: number)
     // const endTime = fromHourSecond(32, 0);
 
     const points: Vector3[] = [];
+    const colors: Color[] = [];
 
-    rides.map(ride => appendRidePointsAll(startTime, endTime, ride, points));
+    rides.map(ride => appendRidePointsAll(startTime, endTime, ride, points, colors));
 
-    const geometry = new BufferGeometry().setFromPoints(points)
-    const material = new LineBasicMaterial({ opacity: 0.5, color: timelineColor })
+    const geometry = new BufferGeometry().setFromPoints(points).setAttribute("color", createColorAtrribute(colors))
+    const material = new LineBasicMaterial({ opacity: 0.5, color: timelineColor, vertexColors: true })
 
     const mesh = new LineSegments(geometry, material)
+    material.color = new Color().setRGB(1, 1, 1)
     return mesh
 }
 
@@ -360,8 +372,27 @@ export function createTimelineSingle(ride: Ride, from: number, to: number, now: 
 const stationRadius = 0.001
 const stationMaterial = new MeshBasicMaterial({ color: stationColor });
 
-function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, points: Vector3[]) {
+const BRAND_COLORS = {
+    "NS": new Color(0xFFC917),
+    "Blauwnet": new Color(0x0092d4),
+    "Arriva": new Color(0x33cbd7),
+    "VIAS": new Color(0x1f307e),
+    "R-net": new Color(0xe30613),
+    "NMBS": new Color(0x006ab3),
+    "DB": new Color(0xec0016),
+    "Eurobahn": new Color(0x3fa4a9),
+    "NS International": new Color(0x003082),
+    "RRReis": new Color(0x4f287b),
+    "Breng": new Color(0xe20070)
+}
+
+function colorForOperator(name: string): Color {
+    return BRAND_COLORS[name] || timelineColor
+}
+
+function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, points: Vector3[], colors: Color[]) {
     let lastPoint = null;
+    let color = colorForOperator(ride.operator);
 
 
     for (const leg of ride.legs as MovingLeg[]) {
@@ -385,7 +416,11 @@ function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, poi
 
                 //Always push the two points of a line segment
                 points.push(lastPoint)
+                colors.push(color)
+
                 points.push(coords)
+                colors.push(color)
+
 
                 lastPoint = coords;
             })
