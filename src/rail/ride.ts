@@ -257,6 +257,7 @@ export type MovingLeg = {
     link_distance: number;
 };
 export type Ride = {
+    line: string,
     operator: string
     id: number;
     distance: number;
@@ -318,6 +319,7 @@ export function parseRide(rideJson: RideJSON, stations: Map<string, Station>, li
 
     return {
         id: rideJson.id,
+        line: getLine(rideJson.id),
         operator: company_map[rideJson.operator].name,
         distance: rideJson.distance,
         endTime: rideJson.endTime,
@@ -333,6 +335,12 @@ export function ride_stopIndexbyCode(ride: Ride, code: string): number {
 
 export function ride_stopbyCode(ride: Ride, code: string): Leg | undefined {
     return ride.legs.find(leg => leg.stationary && leg.station.code.toLowerCase() === code);
+}
+
+function getLine(id: number): string {
+    let str = id.toString();
+    let line = str.substring(0, str.length - 2);
+    return line
 }
 // export function findCurrentLink(ride: Ride, rideProgress: number): [Stop, Stop, number] {
 //     const drivenDistance = ride.distance * rideProgress

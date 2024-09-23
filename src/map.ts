@@ -390,9 +390,34 @@ function colorForOperator(name: string): Color {
     return BRAND_COLORS[name] || timelineColor
 }
 
+const line_color_map = {};
+let line_color_count = 0;
+let golden_ratio = 0.618033988749895;
+
+function color_for_number(n: number): Color {
+    let hue = (n * golden_ratio) % 1;
+    return new Color().setHSL(hue, .8, .3);
+}
+
+function colorForLine(line: string): Color {
+    const existing_color = line_color_map[line];
+    if (typeof existing_color === "object") {
+        return existing_color
+    }
+    // console.log(line)
+    const new_color = color_for_number(line_color_count);
+    line_color_count = line_color_count + 1;
+
+    line_color_map[line] = new_color;
+
+    return new_color
+}
+
+
 function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, points: Vector3[], colors: Color[]) {
     let lastPoint = null;
-    let color = colorForOperator(ride.operator);
+    // let color = colorForOperator(ride.operator);
+    let color = colorForLine(ride.line);
 
 
     for (const leg of ride.legs as MovingLeg[]) {
