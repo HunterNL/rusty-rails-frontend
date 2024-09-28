@@ -245,22 +245,26 @@ export class TrainMap {
         if (value === "hidden") {
             this.timelineUniforms.color_1.value = 0.0;
             this.timelineUniforms.color_2.value = 0.0;
+            this.timelineUniforms.use_plain.value = false;
             return
         }
         if (value === "plain") {
             this.timelineUniforms.color_1.value = 0.0;
             this.timelineUniforms.color_2.value = 0.0;
+            this.timelineUniforms.use_plain.value = true;
             return
         }
         if (value === "operator") {
             this.timelineUniforms.color_1.value = 0.0;
             this.timelineUniforms.color_2.value = 1.0;
+            this.timelineUniforms.use_plain.value = false;
             return
         }
 
         if (value === "line") {
             this.timelineUniforms.color_1.value = 1.0;
             this.timelineUniforms.color_2.value = 0.0;
+            this.timelineUniforms.use_plain.value = false;
             return
         }
 
@@ -358,6 +362,7 @@ function createTimelineAll(data: StaticData, startTime: number, endTime: number)
     const uniforms = {
         color_1: { value: 1.0 },
         color_2: { value: 0.0 },
+        use_plain: { value: false }
 
     };
 

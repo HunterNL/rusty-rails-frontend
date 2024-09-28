@@ -249,3 +249,14 @@ html {
     flex-basis: 20%;
     text-align: right;
 }
+
+
+.settings {
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.help {   
+    padding: 15px;
+    margin-top: 15px;
+}

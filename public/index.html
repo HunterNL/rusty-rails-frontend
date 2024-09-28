@@ -14,15 +14,18 @@
 
 <body>
     <script type="x-shader/x-vertex" id="vertexshader">
+        const vec3 color_plain = vec3(0.5,0.5,0.5);
 
         attribute vec3 color_line;
         attribute vec3 color_operator;
         attribute vec3 postion;
+        
 
         varying vec3 vColor;
 
         uniform float color_1;
         uniform float color_2;
+        uniform bool use_plain;
         //uniform float color_3;
 
         #include <common>
@@ -33,8 +36,13 @@
             //vec3 newPosition = position + amplitude * displacement;
 
             //vColor = customColor;
+            if(use_plain) {
+                vColor = vec3(0.5,0.5,0.5);
+            } else {
+                vColor = (color_line * color_1) + (color_operator * color_2);
+            }
 
-            vColor = (color_line * color_1) + (color_operator * color_2);
+            
 
             gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
             #include <logdepthbuf_vertex>
@@ -43,6 +51,7 @@
     </script>
 
     <script type="x-shader/x-fragment" id="fragmentshader">
+
 
 
         uniform vec3 color;
@@ -85,7 +94,7 @@
                                 placeholder="Rotterdam Centraal">
                         </label>
                     </div>
-                    <input type="submit" value="Send">
+                    <input type="submit" value="Show route">
                 </form>
             </div>
 
@@ -93,21 +102,32 @@
                 <div id="trip_list"></div>
             </div>
 
-            <div class="settings">
+            <div class="settings map_overlay">
+                Timeline color
                 <select data-field="line_color">
                     <option value="hidden">Hidden</option>
                     <option value="plain">Plain</option>
                     <option value="operator">Operator</option>
-                    <option value="line">Line/Serie</option>
+                    <option value="line" selected>Line/Serie</option>
                 </select>
             </div>
+
+            <div class="help map_overlay">
+                <div>Hold right mouse to rotate</div>
+                <div>WASD+RF to move around</div>
+                <div>Shift to move faster</div>
+                <div>Click trains to see schedule</div>
+                <div>Click stations (blue lines) to see departures</div>
+            </div>
+
         </div>
-        <div class="bottom_right">
-            <div data-tag="timer" class="timer"></div>
-        </div>
-        <div class="top_center">
-            <div data-tag="cursor_timer" class="timer timer_cursor"></div>
-        </div>
+    </div>
+    <div class="bottom_right">
+        <div data-tag="timer" class="timer"></div>
+    </div>
+    <div class="top_center">
+        <div data-tag="cursor_timer" class="timer timer_cursor"></div>
+    </div>
     </div>
 </body>
 
