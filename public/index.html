@@ -8,9 +8,62 @@
     <script src="generated/app.js" type="module"></script>
     <link rel="stylesheet" href="style.css">
     <title>Trainmap</title>
+
+
 </head>
 
 <body>
+    <script type="x-shader/x-vertex" id="vertexshader">
+
+        attribute vec3 color_line;
+        attribute vec3 color_operator;
+        attribute vec3 postion;
+
+        varying vec3 vColor;
+
+        uniform float color_1;
+        uniform float color_2;
+        //uniform float color_3;
+
+        #include <common>
+        #include <logdepthbuf_pars_vertex>
+
+        void main() {
+
+            //vec3 newPosition = position + amplitude * displacement;
+
+            //vColor = customColor;
+
+            vColor = (color_line * color_1) + (color_operator * color_2);
+
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+            #include <logdepthbuf_vertex>
+        }
+
+    </script>
+
+    <script type="x-shader/x-fragment" id="fragmentshader">
+
+
+        uniform vec3 color;
+        uniform float opacity;
+
+        varying vec3 vColor;
+
+        #include <logdepthbuf_pars_fragment>
+
+        void main() {
+            #include <logdepthbuf_fragment>
+
+            gl_FragColor = vec4( vColor, 1.0 );
+            //gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+
+        }
+    </script>
+
+
+
+
     <div id="mapcontainer">
         <div id="map"></div>
         <div id="sidebar" class="map_overlay">
@@ -45,6 +98,7 @@
                     <option value="hidden">Hidden</option>
                     <option value="plain">Plain</option>
                     <option value="operator">Operator</option>
+                    <option value="line">Line/Serie</option>
                 </select>
             </div>
         </div>

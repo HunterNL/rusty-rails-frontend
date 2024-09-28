@@ -1,9 +1,10 @@
 import { FirstPersonControls } from "./three/flycontrols";
 
+
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 import { GeometryCollection, MultiPolygon, Position } from "geojson";
-import { BackSide, BufferAttribute, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, Path, PerspectiveCamera, Raycaster, SRGBColorSpace, Scene, Shape, ShapeGeometry, SphereGeometry, Vector2, Vector3, WebGLRenderer } from "three";
+import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, IUniform, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, Path, PerspectiveCamera, Raycaster, SRGBColorSpace, Scene, ShaderMaterial, Shape, ShapeGeometry, SphereGeometry, Vector2, Vector3, WebGLRenderer } from "three";
 import Stats from 'three/addons/libs/stats.module.js';
 import { StaticData, Station, placeRides, projectCoordsToMap, projectCoordsToMapVec3, wpToArray } from "./app";
 import { isDebugEnabled } from "./env";
@@ -35,6 +36,8 @@ const timelineColor = new Color(0x999999)//.convertSRGBToLinear();
 export const planColor = new Color(0xFFC917);
 
 const SHOW_STATS = isDebugEnabled();
+
+export type LineColorStype = "hidden" | "plain" | "operator" | "line"
 
 export type MapContent = {
     trains: Mesh,
@@ -68,6 +71,8 @@ export class TrainMap {
     cursor: Mesh;
     cursorTime: undefined | number
     onCursorTimeChange: undefined | ((a: number | undefined) => void)
+    timelineUniforms: Record<string, IUniform<any>>;
+
     constructor(private data: StaticData, document: Document, container: HTMLElement) {
         const scene = new Scene()
         const renderer = new WebGLRenderer({
@@ -130,7 +135,6 @@ export class TrainMap {
         const mapMesh = new Mesh(map_geometry, grassMat)
         scene.add(mapMesh)
 
-
         // Routes
         const lineMaterial = new LineBasicMaterial({ color: lineColor, linewidth: 10, opacity: .5, transparent: true })
         const lineGeometry = new BufferGeometry()
@@ -139,8 +143,9 @@ export class TrainMap {
         scene.add(routes)
 
         // Timeline
-        const timeLineMesh = createTimelineAll(data, this.zeroTime, this.zeroTime + this.timeSpan);
-        scene.add(timeLineMesh)
+        const timeLine = createTimelineAll(data, this.zeroTime, this.zeroTime + this.timeSpan);
+        scene.add(timeLine.mesh)
+        this.timelineUniforms = timeLine.uniforms
 
 
         // Train models
@@ -202,7 +207,7 @@ export class TrainMap {
 
 
             this.raycaster.setFromCamera(new Vector2(x, y), camera)
-            this.raycaster.intersectObject(timeLineMesh, false, castResult)
+            this.raycaster.intersectObject(timeLine.mesh, false, castResult)
 
             if (castResult.length > 0) {
                 const result = castResult[0];
@@ -230,16 +235,40 @@ export class TrainMap {
 
         return {
             trains: rideMesh,
-            timeline: timeLineMesh,
+            timeline: timeLine.mesh,
             stations: stationMesh,
             plan_options: plans
-
         }
     }
 
-    setLineStyle(value: any) {
-        console.log(value);
-        // throw new Error("Method not implemented.");
+    setLineStyle(value: LineColorStype) {
+        if (value === "hidden") {
+            this.timelineUniforms.color_1.value = 0.0;
+            this.timelineUniforms.color_2.value = 0.0;
+            return
+        }
+        if (value === "plain") {
+            this.timelineUniforms.color_1.value = 0.0;
+            this.timelineUniforms.color_2.value = 0.0;
+            return
+        }
+        if (value === "operator") {
+            this.timelineUniforms.color_1.value = 0.0;
+            this.timelineUniforms.color_2.value = 1.0;
+            return
+        }
+
+        if (value === "line") {
+            this.timelineUniforms.color_1.value = 1.0;
+            this.timelineUniforms.color_2.value = 0.0;
+            return
+        }
+
+        // Check for exhaustive match
+        // "value" should be never at this point
+        let _: never = value;
+
+        throw new Error("Unknown lineStyle: " + value);
     }
 
     private handleCursorChange(time: number | undefined) {
@@ -305,23 +334,47 @@ function createColorAtrribute(colors: Color[]): BufferAttribute {
 
     return new Float32BufferAttribute(buf, 3);
 }
-function createTimelineAll(data: StaticData, startTime: number, endTime: number): Line {
+
+type TimeLine = {
+    mesh: Line,
+    uniforms: Record<string, IUniform<any>>
+}
+
+function createTimelineAll(data: StaticData, startTime: number, endTime: number): TimeLine {
     const { rides, links } = data
 
     // const startTime = fromHourSecond(0, 0);
     // const endTime = fromHourSecond(32, 0);
 
     const points: Vector3[] = [];
-    const colors: Color[] = [];
+    const lineColor: Color[] = [];
+    const operatorColor: Color[] = [];
 
-    rides.map(ride => appendRidePointsAll(startTime, endTime, ride, points, colors));
+    rides.map(ride => appendRidePointsAll(startTime, endTime, ride, points, lineColor, operatorColor));
 
-    const geometry = new BufferGeometry().setFromPoints(points).setAttribute("color", createColorAtrribute(colors))
-    const material = new LineBasicMaterial({ opacity: 0.5, color: timelineColor, vertexColors: true })
+    const geometry = new BufferGeometry().setFromPoints(points).setAttribute("color_line", createColorAtrribute(lineColor)).setAttribute("color_operator", createColorAtrribute(operatorColor))
+    // const material = new LineBasicMaterial({ opacity: 0.5, color: timelineColor, vertexColors: true })
+
+    const uniforms = {
+        color_1: { value: 1.0 },
+        color_2: { value: 0.0 },
+
+    };
+
+    const material = new ShaderMaterial({
+
+        uniforms: uniforms,
+        vertexShader: document.getElementById('vertexshader').textContent,
+        fragmentShader: document.getElementById('fragmentshader').textContent,
+        blending: AdditiveBlending,
+        depthTest: true,
+        transparent: true
+
+    });
 
     const mesh = new LineSegments(geometry, material)
-    material.color = new Color().setRGB(1, 1, 1)
-    return mesh
+    // material.color = new Color().setRGB(1, 1, 1)
+    return { mesh, uniforms }
 }
 
 function elevationForTime(base_time: number, current_time: number) {
@@ -414,10 +467,10 @@ function colorForLine(line: string): Color {
 }
 
 
-function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, points: Vector3[], colors: Color[]) {
+function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, points: Vector3[], colors: Color[], operatorColor: Color[]) {
     let lastPoint = null;
-    // let color = colorForOperator(ride.operator);
-    let color = colorForLine(ride.line);
+    let operatorColor_ = colorForOperator(ride.operator);
+    let lineColor = colorForLine(ride.line);
 
 
     for (const leg of ride.legs as MovingLeg[]) {
@@ -441,10 +494,12 @@ function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, poi
 
                 //Always push the two points of a line segment
                 points.push(lastPoint)
-                colors.push(color)
+                colors.push(lineColor)
+                operatorColor.push(operatorColor_)
 
                 points.push(coords)
-                colors.push(color)
+                colors.push(lineColor)
+                operatorColor.push(operatorColor_)
 
 
                 lastPoint = coords;
