@@ -37,13 +37,14 @@ export type RemoteData = {
     links: LinkJSON[];
     stations: Station[];
     rides: RideJSON[];
-    model: GLTF;
+    model_virm: GLTF;
+    model_flirt: GLTF;
     locations: string[];
     map_geo: any;
 };
 // Process and transform data in structures more useful locally
 export function parseData(remoteData: RemoteData): StaticData {
-    const { model } = remoteData;
+    const { model_virm: model } = remoteData;
     const links = remoteData.links.map(l => parseLink(l, remoteData.locations));
 
     const company_map: Record<string, Company> = {};
@@ -73,7 +74,7 @@ export function parseData(remoteData: RemoteData): StaticData {
 
     return {
         links, rides, stationMap, model, map_geo: remoteData.map_geo, stationPassages: passages, linkMap, locations: remoteData.locations,
-        companies: company_map
+        companies: company_map, model_flirt: remoteData.model_flirt
     };
 }
 // Fetch remote data in parallel 
@@ -88,10 +89,11 @@ export async function getData(): Promise<RemoteData> {
     const map_geopr: Promise<object> = fetch("/data/map.json").then(f => f.json());
 
     const modelLoader = new GLTFLoader();
-    const modelpr = modelLoader.loadAsync("/assets/lowpolytrain.glb");
+    const virmpr = modelLoader.loadAsync("/assets/virm.glb");
+    const flirtpr = modelLoader.loadAsync("/assets/flirt.glb");
 
-    let [links, stations, rides, model, map_geo, locations, companies] = await Promise.all([linkspr, stationspr, ridespr, modelpr, map_geopr, locationspr, companypr]);
+    let [links, stations, rides, model_virm, model_flirt, map_geo, locations, companies] = await Promise.all([linkspr, stationspr, ridespr, virmpr, flirtpr, map_geopr, locationspr, companypr]);
 
-    return { links, stations, rides, model, map_geo, locations, companies };
+    return { links, stations, rides, model_virm, model_flirt, map_geo, locations, companies };
 }
 

@@ -1,9 +1,9 @@
 import { Vector2 } from "three";
-import { Company, PlatformJSON, Station, TrackPosition } from "../app";
+import { Company, modelNameForTransitType, PlatformJSON, Station, TrackPosition } from "../app";
 import { joinWith } from "../array";
 import { Coordinates, coordinatesFromLatLng } from "../geo";
 import { remap } from "../number";
-import { LegLink, firstPosition, lastPosition } from "./leglink";
+import { firstPosition, lastPosition, LegLink } from "./leglink";
 import { link, linkLegFromCode } from "./link";
 import { path_findOffsetPosition } from "./path";
 import { Stop } from "./stop";
@@ -175,6 +175,7 @@ export function getStops(legs: Leg[]): Stop[] {
 }
 export type RideJSON = {
     id: number;
+    transit_type: string,
     startTime: number;
     endTime: number;
     distance: number;
@@ -257,6 +258,7 @@ export type MovingLeg = {
     link_distance: number;
 };
 export type Ride = {
+    model: string
     line: string,
     operator: string
     id: number;
@@ -265,6 +267,7 @@ export type Ride = {
     startTime: number;
     endTime: number;
     legs: Leg[];
+    transit_type: string
 };
 
 export type RideId = {
@@ -318,6 +321,8 @@ export function parseRide(rideJson: RideJSON, stations: Map<string, Station>, li
 
 
     return {
+        transit_type: rideJson.transit_type,
+        model: modelNameForTransitType(rideJson.transit_type),
         id: rideJson.id,
         line: getLine(rideJson.id),
         operator: company_map[rideJson.operator].name,

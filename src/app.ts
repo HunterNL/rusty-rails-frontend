@@ -88,6 +88,7 @@ export type StaticData = {
     stationMap: Map<string, Station>
     linkMap: Map<string, link>,
     model: GLTF,
+    model_flirt: GLTF
     map_geo: any,
     stationPassages: StationPassageRepo
 }
@@ -167,19 +168,29 @@ function setupHotReload() {
     new EventSource('/esbuild').addEventListener('change', () => location.reload())
 }
 
-function updateRides(mesh: InstancedMesh, data: StaticData, instanceIndexToRideMap: Map<number, Ride>, currentTime: number): void {
-    const { rides, links } = data
+export type TrainMeshes = {
+    virm: InstancedMesh
+    flirt: InstancedMesh
+}
 
-    let count = 0;
+function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: number): void {
+    let index_counters = {}
+    Object.keys(meshes).forEach(key => {
+        index_counters[key] = 0;
+    })
 
-    for (let index = 0; index < rides.length; index++) {
-
-        const ride = rides[index];
-        instanceIndexToRideMap.set(index, ride)
+    for (let i = 0; i < rides.length; i++) {
+        const ride = rides[i];
 
         if (!isActiveAtTime(ride, currentTime)) {
             continue
         }
+
+        let meshName = ride.model;
+        let mesh = meshes[meshName];
+        let meshIndex = index_counters[meshName];
+
+        mesh.userData.idMap.set(meshIndex, ride)
 
         const tp = trainPosition(ride, currentTime);
         const pos = realPosition(tp);
@@ -197,23 +208,66 @@ function updateRides(mesh: InstancedMesh, data: StaticData, instanceIndexToRideM
         mat4.lookAt(new Vector3, rot, new Vector3(0, 1, 0))
         mat4.setPosition(trainPos)
 
-        mesh.setMatrixAt(index, mat4)
-        count++
+        mesh.setMatrixAt(meshIndex, mat4)
+        index_counters[meshName]++
     }
-    mesh.instanceMatrix.needsUpdate = true
+
+    Object.values(meshes).forEach(mesh => {
+        mesh.instanceMatrix.needsUpdate = true
+    })
+}
+
+export function modelNameForTransitType(transitType: string): "virm" | "flirt" {
+    if (transitType === "IC") {
+        return "virm";
+    }
+
+    if (transitType === "SPR" || transitType === "ST") {
+        return "flirt";
+    }
+
+    // console.log("unknown model for " + transitType)
+
+    return "virm"
 
 }
 
-export function placeRides(data: StaticData, dataMap: Map<number, Ride>): InstancedMesh {
-    const { rides } = data
+function modelByName(data: StaticData, name: string): any {
+    if (name === "virm") {
+        return data.model;
+    }
+
+    if (name === "flirt") {
+        return data.model_flirt
+    }
+
+    throw new Error("Unknown model: " + name)
+}
+
+export function placeRides(data: StaticData, dataMap: Map<number, Ride>): TrainMeshes {
+    let meshes: TrainMeshes = {
+        virm: createInstancedMesh(data.model, data.rides.length),
+        flirt: createInstancedMesh(data.model_flirt, data.rides.length),
+    }
+
+    // Note, this is independant from the time the Map uses
+    updateRides(meshes, data.rides, currentDayOffset())
+
+    window.setInterval((dt) => {
+        // Note, this is independant from the time the Map uses
+        updateRides(meshes, data.rides, currentDayOffset())
+    }, TRAIN_UPDATE_INTERVAL_MS)
 
 
+    return meshes
+}
+
+function createInstancedMesh(model: any, ride_count: number): InstancedMesh {
     const trainGeo = new BufferGeometry()
     const trainMat = new MeshBasicMaterial()
 
     const trainTexture = new Texture()
 
-    const model = data.model as any // Sadly the types aren't quite accurate
     trainTexture.copy(model.scenes[0].children[0].material.map)
     trainGeo.copy(model.scenes[0].children[0].geometry) // Whyyyyyy
     trainMat.copy(model.scenes[0].children[0].material)
@@ -226,17 +280,8 @@ export function placeRides(data: StaticData, dataMap: Map<number, Ride>): Instan
     trainMat.map.colorSpace = SRGBColorSpace
     trainGeo.scale(TRAIN_SCALE, TRAIN_SCALE, TRAIN_SCALE)
 
-    const mesh = new InstancedMesh(trainGeo, trainMat, rides.length)
-
-    // Note, this is independant from the time the Map uses
-    updateRides(mesh, data, dataMap, currentDayOffset())
-
-    window.setInterval((dt) => {
-        const currentTime = currentDayOffset()
-        updateRides(mesh, data, dataMap, currentTime)
-    }, TRAIN_UPDATE_INTERVAL_MS)
-
-
+    let mesh = new InstancedMesh(trainGeo, trainMat, ride_count)
+    mesh.userData.idMap = new Map();
     return mesh
 }
 

@@ -6,7 +6,7 @@ import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 import { GeometryCollection, MultiPolygon, Position } from "geojson";
 import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, IUniform, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, Path, PerspectiveCamera, Raycaster, SRGBColorSpace, Scene, ShaderMaterial, Shape, ShapeGeometry, SphereGeometry, Vector2, Vector3, WebGLRenderer } from "three";
 import Stats from 'three/addons/libs/stats.module.js';
-import { StaticData, Station, placeRides, projectCoordsToMap, projectCoordsToMapVec3, wpToArray } from "./app";
+import { StaticData, Station, TrainMeshes, placeRides, projectCoordsToMap, projectCoordsToMapVec3, wpToArray } from "./app";
 import { isDebugEnabled } from "./env";
 import { remap } from "./number";
 import { legLink_IterWithDistance } from "./rail/leglink";
@@ -40,7 +40,7 @@ const SHOW_STATS = isDebugEnabled();
 export type LineColorStype = "hidden" | "plain" | "operator" | "line"
 
 export type MapContent = {
-    trains: Mesh,
+    trains: TrainMeshes,
     stations: Object3D,
     timeline: Line,
     plan_options: Object3D
@@ -149,8 +149,12 @@ export class TrainMap {
 
 
         // Train models
-        const rideMesh = placeRides(data, this.instanceIdToRideMap)
-        scene.add(rideMesh)
+        const rideMeshes = placeRides(data, this.instanceIdToRideMap)
+
+        scene.add(rideMeshes.flirt)
+        scene.add(rideMeshes.virm)
+
+
 
         // Stations
         const maxElevation = asSeconds(this.timeSpan) * TIMELINE_ELEVATION_PER_SECOND;
@@ -177,11 +181,12 @@ export class TrainMap {
             const y = (e.clientY / window.innerHeight) * -2 + 1;
 
             this.raycaster.setFromCamera(new Vector2(x, y), camera)
-            const rideCastResult = this.raycaster.intersectObject(rideMesh)
+            const rideCastResult = this.raycaster.intersectObjects(Object.values(rideMeshes))
 
             if (rideCastResult.length > 0) {
+                const mesh = rideCastResult[0].object;
                 const instanceId = rideCastResult[0].instanceId
-                const ride = this.instanceIdToRideMap.get(instanceId)
+                const ride = mesh.userData.idMap.get(instanceId)
 
                 console.debug(ride);
 
@@ -234,7 +239,7 @@ export class TrainMap {
         })
 
         return {
-            trains: rideMesh,
+            trains: rideMeshes,
             timeline: timeLine.mesh,
             stations: stationMesh,
             plan_options: plans
