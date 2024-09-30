@@ -37,7 +37,7 @@ export const planColor = new Color(0xFFC917);
 
 const SHOW_STATS = isDebugEnabled();
 
-export type LineColorStype = "hidden" | "plain" | "operator" | "line"
+export type LineVisualType = "hidden" | "plain" | "operator" | "line"
 
 export type MapContent = {
     trains: TrainMeshes,
@@ -246,7 +246,7 @@ export class TrainMap {
         }
     }
 
-    setLineStyle(value: LineColorStype) {
+    setLineStyle(value: LineVisualType) {
         if (value === "hidden") {
             this.timelineUniforms.color_1.value = 0.0;
             this.timelineUniforms.color_2.value = 0.0;

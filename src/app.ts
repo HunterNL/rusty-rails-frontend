@@ -9,7 +9,7 @@ import { createRideSideBar, createStationSidebar, renderStationPassages } from "
 import { Sidebar } from "./dom/sidebar"
 import { isDebugEnabled } from "./env"
 import { Coordinates, mercator } from "./geo"
-import { LineColorStype, TrainMap, createTimelineSingle, cursorColor, planColor } from "./map"
+import { LineVisualType, TrainMap, createTimelineSingle, cursorColor, planColor } from "./map"
 import { LegLink } from "./rail/leglink"
 import { link } from "./rail/link"
 import { Ride, Trip, isActiveAtTime, realPosition, ride_stopIndexbyCode, trainPosition } from "./rail/ride"
@@ -107,7 +107,7 @@ function setupControlPanel(map: TrainMap) {
 
     // Set the style right away as well
     // Autocomplete will retain the selected choice between refreshes and this ensures we're handling that
-    map.setLineStyle(dropdown.value as LineColorStype)
+    map.setLineStyle(dropdown.value as LineVisualType)
 }
 
 onDomReady(() => {
