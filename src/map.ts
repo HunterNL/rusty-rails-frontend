@@ -62,6 +62,7 @@ export class TrainMap {
     stats: any
     stationMap: any;
     stationMeshMap: any;
+    stationMesh: Object3D;
 
     zeroTime: number; // starttime of view, as dayoffset
     timeSpan: number; // duration of view, as dayoffset
@@ -72,6 +73,7 @@ export class TrainMap {
     cursorTime: undefined | number
     onCursorTimeChange: undefined | ((a: number | undefined) => void)
     timelineUniforms: Record<string, IUniform<any>>;
+
 
     constructor(private data: StaticData, document: Document, container: HTMLElement) {
         const scene = new Scene()
@@ -157,10 +159,11 @@ export class TrainMap {
 
 
         // Stations
-        const maxElevation = asSeconds(this.timeSpan) * TIMELINE_ELEVATION_PER_SECOND;
-        const { stationMesh, stationMeshMap } = createStationMesh(this.data, maxElevation)
+        const { stationMesh, stationMeshMap } = createStationMesh(this.data)
         scene.add(stationMesh);
+        this.stationMesh = stationMesh;
         this.stationMeshMap = stationMeshMap;
+        this.setStationHeight(this.timeSpan)
 
         // PLan lines
         const plans = new Object3D();
@@ -246,7 +249,21 @@ export class TrainMap {
         }
     }
 
+    setStationHeight(timespan: number) {
+        const height = asSeconds(timespan) * TIMELINE_ELEVATION_PER_SECOND;
+        this.stationMesh.scale.setY(height)
+    }
+
+    setStationHeightForLineStyle(value: LineVisualType) {
+        if (value === "hidden") {
+            this.setStationHeight(fromSeconds(10 * 60))
+        } else {
+            this.setStationHeight(this.timeSpan)
+        }
+    }
+
     setLineStyle(value: LineVisualType) {
+        this.setStationHeightForLineStyle(value)
         if (value === "hidden") {
             this.timelineUniforms.color_1.value = 0.0;
             this.timelineUniforms.color_2.value = 0.0;
@@ -521,9 +538,11 @@ function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, poi
 
 }
 
-function createStationMesh(data: StaticData, height: number): { stationMesh: Object3D, stationMeshMap: Map<Object3D, Station> } {
+function createStationMesh(data: StaticData): { stationMesh: Object3D, stationMeshMap: Map<Object3D, Station> } {
     const allStations = new Object3D();
     const map = new Map();
+
+    const height = 1;
 
     const stationGeometry = new CylinderGeometry(stationRadius, stationRadius, height, 6, 1, false);
 
