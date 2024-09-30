@@ -73,6 +73,7 @@ export class TrainMap {
     cursorTime: undefined | number
     onCursorTimeChange: undefined | ((a: number | undefined) => void)
     timelineUniforms: Record<string, IUniform<any>>;
+    isTimelineRaycastEnabled: boolean
 
 
     constructor(private data: StaticData, document: Document, container: HTMLElement) {
@@ -84,6 +85,7 @@ export class TrainMap {
         this.staticData = data
         this.zeroTime = currentDayOffset();
         this.timeSpan = fromSeconds(3600 * 2)
+        this.isTimelineRaycastEnabled = true;
 
 
         renderer.setSize(window.innerWidth, window.innerHeight)
@@ -208,6 +210,7 @@ export class TrainMap {
         })
 
         document.addEventListener("pointermove", e => {
+            if (!this.isTimelineRaycastEnabled) { return }
             const x = (e.clientX / window.innerWidth) * 2 - 1;
             const y = (e.clientY / window.innerHeight) * -2 + 1;
             let castResult: Parameters<typeof Raycaster.prototype.intersectObject>[2] = []; // I miss Rust's type inferrence 
@@ -264,6 +267,8 @@ export class TrainMap {
 
     setLineStyle(value: LineVisualType) {
         this.setStationHeightForLineStyle(value)
+        this.isTimelineRaycastEnabled = value !== "hidden";
+
         if (value === "hidden") {
             this.timelineUniforms.color_1.value = 0.0;
             this.timelineUniforms.color_2.value = 0.0;
