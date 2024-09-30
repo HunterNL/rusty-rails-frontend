@@ -182,6 +182,8 @@ export class TrainMap {
         this.raycaster.params.Line.threshold = 0.01;
 
         document.addEventListener("click", e => {
+            if (e.target.tagName !== "CANVAS") { return }; // Ignore clicks not directy on the canvas
+
             const x = (e.clientX / window.innerWidth) * 2 - 1;
             const y = (e.clientY / window.innerHeight) * -2 + 1;
 

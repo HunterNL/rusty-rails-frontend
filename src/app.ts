@@ -8,6 +8,7 @@ import { createTrips } from "./dom/render/planner_trips"
 import { createRideSideBar, createStationSidebar, renderStationPassages } from "./dom/render/sidebar"
 import { Sidebar } from "./dom/sidebar"
 import { isDebugEnabled } from "./env"
+import { originatesFromForm } from "./events"
 import { Coordinates, mercator } from "./geo"
 import { LineVisualType, TrainMap, createTimelineSingle, cursorColor, planColor } from "./map"
 import { LegLink } from "./rail/leglink"
@@ -108,23 +109,6 @@ function setupControlPanel(map: TrainMap) {
     // Set the style right away as well
     // Autocomplete will retain the selected choice between refreshes and this ensures we're handling that
     map.setLineStyle(dropdown.value as LineVisualType)
-}
-
-function originatesFromForm(e: KeyboardEvent) {
-    let cur = e.target as HTMLElement; // Find the element where the event originates
-    while (true) {
-        if (cur.tagName === "FORM") {
-            return true
-        }
-
-        if (!cur.parentElement) {
-            return false
-        } else {
-            cur = cur.parentElement
-        }
-    }
-
-
 }
 
 onDomReady(() => {
