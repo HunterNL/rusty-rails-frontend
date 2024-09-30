@@ -60,7 +60,10 @@ export class Sidebar {
     hide() {
         document.documentElement.classList.remove("sidebar_visible")
         this.element.classList.remove("visible");
-        this.element.classList.remove(this.style);
+        if (this.style !== "") {
+            this.element.classList.remove(this.style);
+        }
+
         this.style = "";
     }
 
