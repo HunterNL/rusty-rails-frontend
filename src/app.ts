@@ -9,7 +9,7 @@ import { createRideSideBar, createStationSidebar, renderStationPassages } from "
 import { Sidebar } from "./dom/sidebar"
 import { isDebugEnabled } from "./env"
 import { Coordinates, mercator } from "./geo"
-import { TrainMap, createTimelineSingle, cursorColor, planColor } from "./map"
+import { LineColorStype, TrainMap, createTimelineSingle, cursorColor, planColor } from "./map"
 import { LegLink } from "./rail/leglink"
 import { link } from "./rail/link"
 import { Ride, Trip, isActiveAtTime, realPosition, ride_stopIndexbyCode, trainPosition } from "./rail/ride"
@@ -95,9 +95,19 @@ export type StaticData = {
 
 function setupControlPanel(map: TrainMap) {
 
-    document.querySelector("[data-field='line_color']").addEventListener("change", e => {
-        map.setLineStyle(e.target.value);
+    const dropdown = document.querySelector("[data-field='line_color']") as HTMLOptionElement
+
+    if (dropdown === null) {
+        throw new Error("Control panel didn't find dropdown element!")
+    }
+
+    dropdown.addEventListener("change", e => {
+        map.setLineStyle((e.target as any).value);
     })
+
+    // Set the style right away as well
+    // Autocomplete will retain the selected choice between refreshes and this ensures we're handling that
+    map.setLineStyle(dropdown.value as LineColorStype)
 }
 
 onDomReady(() => {
