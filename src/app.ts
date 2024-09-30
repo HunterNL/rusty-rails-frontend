@@ -90,6 +90,7 @@ export type StaticData = {
     linkMap: Map<string, link>,
     model: GLTF,
     model_flirt: GLTF
+    model_talent_643: GLTF
     map_geo: any,
     stationPassages: StationPassageRepo
 }
@@ -188,6 +189,7 @@ function setupHotReload() {
 export type TrainMeshes = {
     virm: InstancedMesh
     flirt: InstancedMesh
+    talent: InstancedMesh
 }
 
 function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: number): void {
@@ -234,16 +236,20 @@ function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: number): v
     })
 }
 
-export function modelNameForTransitType(transitType: string): "virm" | "flirt" {
+export function modelNameForTransitType(transitType: string, operator: string): "virm" | "flirt" | "talent" {
     if (transitType === "IC") {
         return "virm";
+    }
+
+    if (operator === "DB" && transitType === "ST") {
+        return "talent"
     }
 
     if (transitType === "SPR" || transitType === "ST") {
         return "flirt";
     }
 
-    // console.log("unknown model for " + transitType)
+    // console.log("unknown model for " + transitType + "(" + operator + ")")
 
     return "virm"
 
@@ -258,6 +264,10 @@ function modelByName(data: StaticData, name: string): any {
         return data.model_flirt
     }
 
+    if (name === "talent") {
+        return data.model_talent_643
+    }
+
     throw new Error("Unknown model: " + name)
 }
 
@@ -265,6 +275,7 @@ export function placeRides(data: StaticData, dataMap: Map<number, Ride>): TrainM
     let meshes: TrainMeshes = {
         virm: createInstancedMesh(data.model, data.rides.length),
         flirt: createInstancedMesh(data.model_flirt, data.rides.length),
+        talent: createInstancedMesh(data.model_talent_643, data.rides.length),
     }
 
     // Note, this is independant from the time the Map uses

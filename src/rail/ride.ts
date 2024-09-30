@@ -322,7 +322,7 @@ export function parseRide(rideJson: RideJSON, stations: Map<string, Station>, li
 
     return {
         transit_type: rideJson.transit_type,
-        model: modelNameForTransitType(rideJson.transit_type),
+        model: modelNameForTransitType(rideJson.transit_type, company_map[rideJson.operator].name),
         id: rideJson.id,
         line: getLine(rideJson.id),
         operator: company_map[rideJson.operator].name,

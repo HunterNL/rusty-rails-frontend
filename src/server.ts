@@ -39,6 +39,7 @@ export type RemoteData = {
     rides: RideJSON[];
     model_virm: GLTF;
     model_flirt: GLTF;
+    model_talent_643: GLTF;
     locations: string[];
     map_geo: any;
 };
@@ -74,7 +75,8 @@ export function parseData(remoteData: RemoteData): StaticData {
 
     return {
         links, rides, stationMap, model, map_geo: remoteData.map_geo, stationPassages: passages, linkMap, locations: remoteData.locations,
-        companies: company_map, model_flirt: remoteData.model_flirt
+        companies: company_map, model_flirt: remoteData.model_flirt,
+        model_talent_643: remoteData.model_talent_643
     };
 }
 // Fetch remote data in parallel 
@@ -91,9 +93,11 @@ export async function getData(): Promise<RemoteData> {
     const modelLoader = new GLTFLoader();
     const virmpr = modelLoader.loadAsync("/assets/virm.glb");
     const flirtpr = modelLoader.loadAsync("/assets/flirt.glb");
+    const talent_643pr = modelLoader.loadAsync("/assets/c643.glb");
 
-    let [links, stations, rides, model_virm, model_flirt, map_geo, locations, companies] = await Promise.all([linkspr, stationspr, ridespr, virmpr, flirtpr, map_geopr, locationspr, companypr]);
 
-    return { links, stations, rides, model_virm, model_flirt, map_geo, locations, companies };
+    let [links, stations, rides, model_virm, model_flirt, map_geo, locations, companies, model_talent_643] = await Promise.all([linkspr, stationspr, ridespr, virmpr, flirtpr, map_geopr, locationspr, companypr, talent_643pr]);
+
+    return { links, stations, rides, model_virm, model_flirt, map_geo, locations, companies, model_talent_643 };
 }
 

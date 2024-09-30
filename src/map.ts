@@ -157,6 +157,7 @@ export class TrainMap {
 
         scene.add(rideMeshes.flirt)
         scene.add(rideMeshes.virm)
+        scene.add(rideMeshes.talent)
 
 
 
