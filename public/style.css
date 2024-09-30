@@ -260,3 +260,6 @@ html {
     padding: 15px;
     margin-top: 15px;
 }
+.ui_hidden .hidable_ui {
+    visibility: hidden;
+}

@@ -110,6 +110,23 @@ function setupControlPanel(map: TrainMap) {
     map.setLineStyle(dropdown.value as LineVisualType)
 }
 
+function originatesFromForm(e: KeyboardEvent) {
+    let cur = e.target as HTMLElement; // Find the element where the event originates
+    while (true) {
+        if (cur.tagName === "FORM") {
+            return true
+        }
+
+        if (!cur.parentElement) {
+            return false
+        } else {
+            cur = cur.parentElement
+        }
+    }
+
+
+}
+
 onDomReady(() => {
     if (isDebugEnabled()) {
         setupHotReload()
@@ -127,11 +144,17 @@ onDomReady(() => {
     document.querySelectorAll("[data-action='sidebar_close']").forEach(e => e.addEventListener("click", () => sidebar.hide()))
 
     window.addEventListener("keydown", e => {
+        if (e.key === "p") {
+            if (!originatesFromForm(e)) {
+                document.body.classList.toggle("ui_hidden");
+            }
+
+        }
+
         if (e.key === "Escape") {
             sidebar.hide()
         }
     })
-
     // Map
     getData().then(parseData).then(data => {
         // Create copy
