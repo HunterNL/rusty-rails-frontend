@@ -52,7 +52,7 @@ export type Time = {
     currentTime: number,
     isRealtime: boolean,
     isRunning: boolean,
-    
+
 }
 
 export class TrainMap {
@@ -135,8 +135,8 @@ export class TrainMap {
         this.intervalHandle =
             window.setInterval((dt: number) => {
                 if (this.time.isRunning && this.time.isRealtime) {
-                  
-               this.time.currentTime = currentDayOffset();
+
+                    this.time.currentTime = currentDayOffset();
                 }
 
                 updateRides(this.mapContent.trains, data.rides, this.time.currentTime)

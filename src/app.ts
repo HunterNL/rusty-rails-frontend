@@ -171,13 +171,13 @@ onDomReady(() => {
             setupControlPanel(map)
             setupTimeControl(map)
 
-                //Timer
-    const timer_element = document.querySelector('[data-tag=timer]');
-    if (!timer_element) {
-        throw new Error("Expected timer element")
-    }
+            //Timer
+            const timer_element = document.querySelector('[data-tag=timer]');
+            if (!timer_element) {
+                throw new Error("Expected timer element")
+            }
 
-    setupTimer(timer_element, map.time);
+            setupTimer(timer_element, map.time);
         }).catch(e => console.error(e))
     })
 
@@ -475,28 +475,29 @@ function joinTripsWithRides(trips: Trip[], rides: Ride[]): TripRideLeg[][] {
 }
 
 function setupTimeControl(map: TrainMap) {
-    window.addEventListener("keydown",e => {
-        console.log(map.time,e.key)
-        if (e.key === "1")  {
+    window.addEventListener("keydown", e => {
+        console.log(map.time, e.key)
+        if (e.key === "1") {
             map.time.isRealtime = false;
             map.time.isRunning = false;
 
             map.time.currentTime = map.time.currentTime - fromSeconds(10)
-            
+
         }
-        if (e.key === "2")  {
+        if (e.key === "2") {
             map.time.isRealtime = false;
             map.time.isRunning = false;
 
             map.time.currentTime = map.time.currentTime + fromSeconds(10)
-            
+
         }
 
-if (e.key === "3")  {
+        if (e.key === "3") {
             map.time.isRealtime = true;
             map.time.isRunning = true;
 
-            
-        }        })
+
+        }
+    })
 }
 
