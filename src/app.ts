@@ -10,7 +10,7 @@ import { Sidebar } from "./dom/sidebar"
 import { isDebugEnabled } from "./env"
 import { originatesFromForm } from "./events"
 import { Coordinates, mercator } from "./geo"
-import { LineVisualType, TrainMap, createTimelineSingle, cursorColor, planColor } from "./map"
+import { LineVisualType, Time, TrainMap, createTimelineSingle, cursorColor, planColor } from "./map"
 import { LegLink } from "./rail/leglink"
 import { link } from "./rail/link"
 import { Ride, Trip, isActiveAtTime, realPosition, ride_stopIndexbyCode, trainPosition } from "./rail/ride"
@@ -18,11 +18,16 @@ import { findPath, getData, parseData } from "./server"
 import { StationPassageRepo } from "./stoprepo"
 import { currentDayOffset, formatDaySeconds, fromSeconds } from "./time"
 
-const TRAIN_UPDATE_INTERVAL_MS = 60
+
 const TRACK_SIDEWAYS_OFFSET = 2.5
 const TRAIN_SCALE = 0.0017;
 
-declare var DEFINE_API_HOST //set by Esbuild
+// Just to pass time as a reference
+// export type NumRef = {
+//     num: number
+// }
+
+declare var DEFINE_API_HOST: string //set by Esbuild
 export const API_HOST = DEFINE_API_HOST
 
 export type PlatformJSON = {
@@ -117,13 +122,6 @@ onDomReady(() => {
         setupHotReload()
     }
 
-    //Timer
-    const timer_element = document.querySelector('[data-tag=timer]');
-    if (!timer_element) {
-        throw new Error("Expected timer element")
-    }
-    setupTimer(timer_element);
-
     // Sidebar
     const sidebar = new Sidebar(document.getElementById("sidebar"))
     document.querySelectorAll("[data-action='sidebar_close']").forEach(e => e.addEventListener("click", () => sidebar.hide()))
@@ -171,6 +169,15 @@ onDomReady(() => {
 
             setupForm(data, form, trip_list, map);
             setupControlPanel(map)
+            setupTimeControl(map)
+
+                //Timer
+    const timer_element = document.querySelector('[data-tag=timer]');
+    if (!timer_element) {
+        throw new Error("Expected timer element")
+    }
+
+    setupTimer(timer_element, map.time);
         }).catch(e => console.error(e))
     })
 
@@ -192,7 +199,7 @@ export type TrainMeshes = {
     talent: InstancedMesh
 }
 
-function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: number): void {
+export function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: number): void {
     let index_counters = {}
     Object.keys(meshes).forEach(key => {
         index_counters[key] = 0;
@@ -271,21 +278,14 @@ function modelByName(data: StaticData, name: string): any {
     throw new Error("Unknown model: " + name)
 }
 
-export function placeRides(data: StaticData, dataMap: Map<number, Ride>): TrainMeshes {
+export function placeRides(data: StaticData, dataMap: Map<number, Ride>, time: number): TrainMeshes {
     let meshes: TrainMeshes = {
         virm: createInstancedMesh(data.model, data.rides.length),
         flirt: createInstancedMesh(data.model_flirt, data.rides.length),
         talent: createInstancedMesh(data.model_talent_643, data.rides.length),
     }
 
-    // Note, this is independant from the time the Map uses
-    updateRides(meshes, data.rides, currentDayOffset())
-
-    window.setInterval((dt) => {
-        // Note, this is independant from the time the Map uses
-        updateRides(meshes, data.rides, currentDayOffset())
-    }, TRAIN_UPDATE_INTERVAL_MS)
-
+    updateRides(meshes, data.rides, time)
 
     return meshes
 }
@@ -442,9 +442,9 @@ function insertDataList(id: string, station_names: string[]) {
     document.documentElement.appendChild(list);
 }
 
-function setupTimer(timer_element: Element) {
+function setupTimer(timer_element: Element, timer: Time) {
     const fn = () => {
-        timer_element.textContent = formatDaySeconds(currentDayOffset());
+        timer_element.textContent = formatDaySeconds(timer.currentTime);
     };
 
     const _interval = window.setInterval(fn, 1000)
@@ -472,5 +472,31 @@ function joinTripsWithRides(trips: Trip[], rides: Ride[]): TripRideLeg[][] {
     const valid_trips = trips.filter(trip => trip.legs.every(leg => rides.some(ride => ride.id.toString() === leg.id)));
 
     return valid_trips.map(trip => joinRides(trip, rides))
+}
+
+function setupTimeControl(map: TrainMap) {
+    window.addEventListener("keydown",e => {
+        console.log(map.time,e.key)
+        if (e.key === "1")  {
+            map.time.isRealtime = false;
+            map.time.isRunning = false;
+
+            map.time.currentTime = map.time.currentTime - fromSeconds(10)
+            
+        }
+        if (e.key === "2")  {
+            map.time.isRealtime = false;
+            map.time.isRunning = false;
+
+            map.time.currentTime = map.time.currentTime + fromSeconds(10)
+            
+        }
+
+if (e.key === "3")  {
+            map.time.isRealtime = true;
+            map.time.isRunning = true;
+
+            
+        }        })
 }
 

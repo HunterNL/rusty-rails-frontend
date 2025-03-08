@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "serve",
+			"problemMatcher": [],
+			"label": "npm: serve",
+			"detail": "esbuild ./src/app.ts --bundle --sourcemap --format=esm --platform=browser --outfile=public/app.js --keyfile=config/secret/key.pem --certfile=config/secret/cert.pem --watch --serve=127.0.0.1:3000 --servedir=public"
+		}
+	]
+}

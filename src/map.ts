@@ -6,7 +6,7 @@ import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 import { GeometryCollection, MultiPolygon, Position } from "geojson";
 import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, IUniform, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, Path, PerspectiveCamera, Raycaster, SRGBColorSpace, Scene, ShaderMaterial, Shape, ShapeGeometry, SphereGeometry, Vector2, Vector3, WebGLRenderer } from "three";
 import Stats from 'three/addons/libs/stats.module.js';
-import { StaticData, Station, TrainMeshes, placeRides, projectCoordsToMap, projectCoordsToMapVec3, wpToArray } from "./app";
+import { StaticData, Station, TrainMeshes, placeRides, projectCoordsToMap, projectCoordsToMapVec3, updateRides, wpToArray } from "./app";
 import { isDebugEnabled } from "./env";
 import { remap } from "./number";
 import { legLink_IterWithDistance } from "./rail/leglink";
@@ -23,6 +23,8 @@ const LOOK_SPEED = 0.0005;
 const FUTURE_ITERATIONS = 30;
 const FUTURE_STEP_SECONDS = 60;
 const TIMELINE_ELEVATION_PER_SECOND = 0.00004;
+
+const TRAIN_UPDATE_INTERVAL_MS = 60
 
 const MAX_LOOKAHEAD_TIME_SECONDS = FUTURE_ITERATIONS * FUTURE_STEP_SECONDS
 
@@ -46,6 +48,13 @@ export type MapContent = {
     plan_options: Object3D
 }
 
+export type Time = {
+    currentTime: number,
+    isRealtime: boolean,
+    isRunning: boolean,
+    
+}
+
 export class TrainMap {
     scene: Scene;
     renderer: WebGLRenderer;
@@ -66,6 +75,7 @@ export class TrainMap {
 
     zeroTime: number; // starttime of view, as dayoffset
     timeSpan: number; // duration of view, as dayoffset
+    time: Time;
 
     mapContent: MapContent;
     raycaster: Raycaster;
@@ -73,7 +83,8 @@ export class TrainMap {
     cursorTime: undefined | number
     onCursorTimeChange: undefined | ((a: number | undefined) => void)
     timelineUniforms: Record<string, IUniform<any>>;
-    isTimelineRaycastEnabled: boolean
+    isTimelineRaycastEnabled: boolean;
+    intervalHandle: number | undefined;
 
 
     constructor(private data: StaticData, document: Document, container: HTMLElement) {
@@ -85,6 +96,7 @@ export class TrainMap {
         this.staticData = data
         this.zeroTime = currentDayOffset();
         this.timeSpan = fromSeconds(3600 * 2)
+        this.time = { currentTime: currentDayOffset(), isRunning: true, isRealtime: true }
         this.isTimelineRaycastEnabled = true;
 
 
@@ -120,6 +132,16 @@ export class TrainMap {
 
         this.mapContent = this.populateScene()
 
+        this.intervalHandle =
+            window.setInterval((dt: number) => {
+                if (this.time.isRunning && this.time.isRealtime) {
+                  
+               this.time.currentTime = currentDayOffset();
+                }
+
+                updateRides(this.mapContent.trains, data.rides, this.time.currentTime)
+            }, TRAIN_UPDATE_INTERVAL_MS)
+
         if (SHOW_STATS) {
             this.stats = new Stats();
             container.appendChild(this.stats.dom)
@@ -153,7 +175,7 @@ export class TrainMap {
 
 
         // Train models
-        const rideMeshes = placeRides(data, this.instanceIdToRideMap)
+        const rideMeshes = placeRides(data, this.instanceIdToRideMap, this.time.currentTime)
 
         scene.add(rideMeshes.flirt)
         scene.add(rideMeshes.virm)
@@ -183,7 +205,8 @@ export class TrainMap {
         this.raycaster.params.Line.threshold = 0.01;
 
         document.addEventListener("click", e => {
-            if (e.target.tagName !== "CANVAS") { return }; // Ignore clicks not directy on the canvas
+
+            if ((e.target as any).tagName !== "CANVAS") { return }; // Ignore clicks not directy on the canvas
 
             const x = (e.clientX / window.innerWidth) * 2 - 1;
             const y = (e.clientY / window.innerHeight) * -2 + 1;
@@ -569,7 +592,7 @@ function createStationMesh(data: StaticData): { stationMesh: Object3D, stationMe
 
 }
 
-function assertEq(left, right) {
+function assertEq(left: any, right: any) {
     if (left !== right) {
         throw new Error(`Expected ${left} to equal ${right}`);
     }
