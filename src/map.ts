@@ -134,11 +134,7 @@ export class TrainMap {
 
         this.intervalHandle =
             window.setInterval((dt: number) => {
-                if (this.time.isRunning && this.time.isRealtime) {
-
-                    this.time.currentTime = currentDayOffset();
-                }
-
+                updateTime(this.time, dt);
                 updateRides(this.mapContent.trains, data.rides, this.time.currentTime)
             }, TRAIN_UPDATE_INTERVAL_MS)
 
@@ -651,3 +647,15 @@ function coordsToPath(path: Position[]): Path {
 
     return p
 }
+function updateTime(time: Time, dt: number) {
+    if (time.isRunning) {
+        if (time.isRealtime) {
+            time.currentTime = currentDayOffset();
+        } else {
+            time.currentTime += fromSeconds(TRAIN_UPDATE_INTERVAL_MS / 1000)
+        }
+
+    }
+
+}
+

@@ -16,7 +16,7 @@ import { link } from "./rail/link"
 import { Ride, Trip, isActiveAtTime, realPosition, ride_stopIndexbyCode, trainPosition } from "./rail/ride"
 import { findPath, getData, parseData } from "./server"
 import { StationPassageRepo } from "./stoprepo"
-import { currentDayOffset, formatDaySeconds, fromSeconds } from "./time"
+import { currentDayOffset, formatDaySeconds, formatDaySecondsWithSeconds, fromSeconds } from "./time"
 
 
 const TRACK_SIDEWAYS_OFFSET = 2.5
@@ -444,7 +444,7 @@ function insertDataList(id: string, station_names: string[]) {
 
 function setupTimer(timer_element: Element, timer: Time) {
     const fn = () => {
-        timer_element.textContent = formatDaySeconds(timer.currentTime);
+        timer_element.textContent = formatDaySecondsWithSeconds(timer.currentTime);
     };
 
     const _interval = window.setInterval(fn, 1000)
@@ -476,7 +476,6 @@ function joinTripsWithRides(trips: Trip[], rides: Ride[]): TripRideLeg[][] {
 
 function setupTimeControl(map: TrainMap) {
     window.addEventListener("keydown", e => {
-        console.log(map.time, e.key)
         if (e.key === "1") {
             map.time.isRealtime = false;
             map.time.isRunning = false;
@@ -497,6 +496,11 @@ function setupTimeControl(map: TrainMap) {
             map.time.isRunning = true;
 
 
+        }
+
+        if (e.key === " ") {
+            map.time.isRunning = !map.time.isRunning
+            map.time.isRealtime = false
         }
     })
 }
