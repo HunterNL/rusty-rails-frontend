@@ -1,7 +1,7 @@
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { API_HOST, Company, StaticData, Station } from "./app";
 import { LinkJSON, link, parseLink } from "./rail/link";
-import { Ride, RideJSON, Trip, parseRide } from "./rail/ride";
+import { DatedRideJson, Ride, RideJSON, Trip, parseRide } from "./rail/ride";
 import { newPassageRepo } from "./stoprepo";
 
 
@@ -23,7 +23,7 @@ export async function findPath(staticData: StaticData, from: string, to: string)
     };
 } export type FindPathResponseJson = {
     trips: Trip[];
-    rides: RideJSON[];
+    rides: DatedRideJson[];
 };
 
 export type FindPathResponse = {
@@ -36,7 +36,7 @@ export type RemoteData = {
     companies: Company[];
     links: LinkJSON[];
     stations: Station[];
-    rides: RideJSON[];
+    rides: DatedRideJson[];
     model_virm: GLTF;
     model_flirt: GLTF;
     model_talent_643: GLTF;
@@ -85,7 +85,7 @@ export async function getData(): Promise<RemoteData> {
     const stationspr: Promise<Station[]> = fetch(API_HOST + "data/stations.json").then(f => f.json()).then(f => f);
     const companypr: Promise<Company[]> = fetch(API_HOST + "data/company_map.json").then(f => f.json()).then(f => f);
     const locationspr: Promise<string[]> = fetch(API_HOST + "data/location_map.json").then(f => f.json()).then(f => f);
-    const ridespr: Promise<RideJSON[]> = fetch(API_HOST + "api/activerides_timespan").then(f => f.json()).then(f => f);
+    const ridespr: Promise<DatedRideJson[]> = fetch(API_HOST + "api/activerides_timespan").then(f => f.json()).then(f => f);
 
     // const ridespr: Promise<RideJSON[]> = fetch(API_HOST + "api/rides_all").then(f => f.json()).then(f => f)
     const map_geopr: Promise<object> = fetch("/data/map.json").then(f => f.json());

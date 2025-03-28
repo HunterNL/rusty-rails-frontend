@@ -173,6 +173,11 @@ export function getStops(legs: Leg[]): Stop[] {
         }
     });
 }
+
+export type DatedRideJson= {
+    line: RideJSON,
+    date: string,
+}
 export type RideJSON = {
     id: number;
     transit_type: string,
@@ -316,19 +321,20 @@ export function create_link_codes(start: string, end: string, waypoints: string[
         return left + "_" + right
     })
 }
-export function parseRide(rideJson: RideJSON, stations: Map<string, Station>, links: Map<string, link>, locations: string[], company_map: Record<string, Company>): Ride {
-    let legs = rideJson.legs.map((legJson, index) => parseLeg(legJson, index, rideJson, stations, links, locations))
+export function parseRide(rideJson: DatedRideJson, stations: Map<string, Station>, links: Map<string, link>, locations: string[], company_map: Record<string, Company>): Ride {
+    let ride = rideJson.line;
+    let legs = ride.legs.map((legJson, index) => parseLeg(legJson, index, ride, stations, links, locations))
 
 
     return {
-        transit_type: rideJson.transit_type,
-        model: modelNameForTransitType(rideJson.transit_type, company_map[rideJson.operator].name),
-        id: rideJson.id,
-        line: getLine(rideJson.id),
-        operator: company_map[rideJson.operator].name,
-        distance: rideJson.distance,
-        endTime: rideJson.endTime,
-        startTime: rideJson.startTime,
+        transit_type: ride.transit_type,
+        model: modelNameForTransitType(ride.transit_type, company_map[ride.operator].name),
+        id: ride.id,
+        line: getLine(ride.id),
+        operator: company_map[ride.operator].name,
+        distance: ride.distance,
+        endTime: ride.endTime,
+        startTime: ride.startTime,
         stops: getStops(legs),
         legs,
     }
