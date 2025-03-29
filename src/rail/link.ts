@@ -24,6 +24,7 @@ export function parseLink(json: LinkJSON, locations: string[]): link {
 export function linkLegFromCode(linkMap: Map<string, link>, code: string): LegLink {
     const link = linkMap.get(code)
     if (!link) {
+        console.warn(linkMap, code)
         throw new Error("Link not found")
     }
 
