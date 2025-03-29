@@ -7,6 +7,8 @@ import { firstPosition, lastPosition, LegLink } from "./leglink";
 import { link, linkLegFromCode } from "./link";
 import { path_findOffsetPosition } from "./path";
 import { Stop } from "./stop";
+import { asSeconds } from "../time";
+import { distance_fraction_from_constant_acceleration, distance_fraction_from_cruising_speed, SpeedPosition } from "../math"
 
 
 export type Position2d = {
@@ -61,18 +63,26 @@ function findPositionOnLink(l: LegLink, fraction: number): Position2d {
     throw new Error("Point not found")
 }
 
-function findCurrentPositionOnLeg(leg: MovingLeg, time: number): TrackPosition {
-    const fraction = remap(time, leg.startTime, leg.endTime, 0, 1);
+function findCurrentPositionOnLeg(leg: MovingLeg, time: number): TrainPosition {
+    const time_fraction = remap(time, leg.startTime, leg.endTime, 0, 1);
 
-    if (fraction < 0 || fraction > 1) {
+    if (time_fraction < 0 || time_fraction > 1) {
         throw new Error("Unexpected fraction")
     }
 
+    const speed_distance = leg_get_distance_fraction(leg, time_fraction)
+
     const totalLegLength = leg.links.reduce((acc, cur) => acc + cur.Link.path.pathLength, 0);
 
-    const coveredLegDistance = fraction * totalLegLength;
+    const coveredLegDistance = speed_distance.distance_fraction * leg.link_distance;
 
-    return findCurrentLink(leg, coveredLegDistance)
+    const link = findCurrentLink(leg, coveredLegDistance)
+
+    return {
+        leglink: link.leglink,
+        offset: link.offset,
+        speed: speed_distance.speed
+    }
 }
 
 function realizeTrackPosition(pos: TrackPosition): Position2d {
@@ -126,7 +136,9 @@ function trackPositionForStation(lastLeg: MovingLeg | undefined, nextLeg?: Movin
     throw new Error("Unreachable");
 }
 
-export function trainPosition(ride: Ride, time: number): TrackPosition {
+export type TrainPosition = TrackPosition & { speed: number }
+
+export function trainPosition(ride: Ride, time: number): TrainPosition {
     if (!isActiveAtTime(ride, time)) {
         throw new Error("Cannot get position of train outside schedule times");
     }
@@ -142,7 +154,12 @@ export function trainPosition(ride: Ride, time: number): TrackPosition {
             const previousLeg = ride.legs[currentLegIndex - 1] as MovingLeg | undefined
             const nextLeg = ride.legs[currentLegIndex + 1] as MovingLeg | undefined
 
-            return trackPositionForStation(previousLeg, nextLeg)
+            const pos = trackPositionForStation(previousLeg, nextLeg)
+            return {
+                leglink: pos.leglink,
+                offset: pos.offset,
+                speed: 0
+            }
         }
         case false: {
             return findCurrentPositionOnLeg(currentLeg, time);
@@ -174,7 +191,7 @@ export function getStops(legs: Leg[]): Stop[] {
     });
 }
 
-export type DatedRideJson= {
+export type DatedRideJson = {
     line: RideJSON,
     date: string,
 }
@@ -261,6 +278,7 @@ export type MovingLeg = {
     links: LegLink[];
     link_codes: string[];
     link_distance: number;
+    cruising_speed: number;
 };
 export type Ride = {
     model: string
@@ -273,6 +291,7 @@ export type Ride = {
     endTime: number;
     legs: Leg[];
     transit_type: string
+    speed: number // TODO Dont have this here, keep rides readonly
 };
 
 export type RideId = {
@@ -290,6 +309,7 @@ export function parseLeg(json: LegJSON, index: number, rideJson: RideJSON, stati
         const link_codes = create_link_codes(from, to, waypoints)
         const links2 = link_codes.map(code => linkLegFromCode(links, code))
         const link_distance = links2.reduce((acc, cur) => acc + cur.Link.path.pathLength, 0)
+        const duration_seconds = asSeconds(json.timeEnd - json.timeStart)
 
         return {
             endTime: json.timeEnd,
@@ -300,6 +320,7 @@ export function parseLeg(json: LegJSON, index: number, rideJson: RideJSON, stati
             link_codes,
             links: links2,
             link_distance,
+            cruising_speed: cruising_speed(link_distance, duration_seconds)
         }
 
 
@@ -337,6 +358,7 @@ export function parseRide(rideJson: DatedRideJson, stations: Map<string, Station
         startTime: ride.startTime,
         stops: getStops(legs),
         legs,
+        speed: 0
     }
 }
 
@@ -353,6 +375,45 @@ function getLine(id: number): string {
     let line = str.substring(0, str.length - 2);
     return line
 }
+
+const TRAIN_ACCEL = 0.6;
+function cruising_speed(link_distance_km: number, duration_seconds: number): number {
+    const link_distance = link_distance_km * 1000;
+    const durationTimesAccell = duration_seconds * TRAIN_ACCEL
+
+    let vc = durationTimesAccell - Math.sqrt((durationTimesAccell) * (durationTimesAccell) - 4 * link_distance * TRAIN_ACCEL)
+
+
+
+    vc = vc / 2
+
+    // VERIFICAITON
+    if (false) {
+
+
+        const acceleration_time = vc / TRAIN_ACCEL
+        const distance_verification = TRAIN_ACCEL * acceleration_time * acceleration_time + (duration_seconds - 2 * acceleration_time) * vc
+
+        console.log("EXPECTED: ", link_distance, "CALCULCATED: ", distance_verification)
+    }
+    // VERIFICATION
+
+    // if (Number.isNaN(vc)) {
+    //     throw new Error("oh no")
+    // }
+
+    return vc
+}
+function leg_get_distance_fraction(leg: MovingLeg, time_fraction: number): SpeedPosition {
+    if (Number.isFinite(leg.cruising_speed)) {
+        return distance_fraction_from_cruising_speed(leg.link_distance * 1000, asSeconds(leg.endTime - leg.startTime), leg.cruising_speed, time_fraction)
+    } else {
+        // If cruising speed is invalid, fallback on assuming constant acceleration and decelleration
+        return distance_fraction_from_constant_acceleration(leg.link_distance * 1000, asSeconds(leg.endTime - leg.startTime), time_fraction)
+    }
+}
+
+
 // export function findCurrentLink(ride: Ride, rideProgress: number): [Stop, Stop, number] {
 //     const drivenDistance = ride.distance * rideProgress
 //     if (rideProgress == 1) {

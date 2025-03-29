@@ -140,6 +140,9 @@ onDomReady(() => {
     })
     // Map
     getData().then(parseData).then(data => {
+        console.log("Got " + data.rides.length + " rides")
+        console.log(data)
+
         // Create copy
         const stations: Station[] = [];
         for (let station of data.stationMap.values()) {
@@ -220,6 +223,7 @@ export function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: num
 
         const tp = trainPosition(ride, currentTime);
         const pos = realPosition(tp);
+        ride.speed = tp.speed
 
         const up = new Vector3(0, 1, 0);
         const trainPos = projectCoordsToMapVec3(pos.position)

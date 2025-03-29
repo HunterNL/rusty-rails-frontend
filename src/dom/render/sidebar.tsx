@@ -37,6 +37,7 @@ export function createRideSideBar(ride: Ride, data: StaticData): Element {
 
     const elem = <div class="sidebar_ride">
         <div class="id">{ride.id.toString()}</div>
+        <div class="speed">{Math.round(ride.speed * 3.6).toString()} km/h</div>
         {stops.map(stop =>
             <div class="stop">
                 <div class="name">{stations.get(stop.code).name}</div>
