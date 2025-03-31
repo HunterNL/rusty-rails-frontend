@@ -3,7 +3,7 @@ import { FirstPersonControls } from "./three/flycontrols";
 
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
-import { GeometryCollection, MultiPolygon, Position } from "geojson";
+import { GeometryCollection, MultiPolygon, Polygon, Position } from "geojson";
 import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, IUniform, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, Path, PerspectiveCamera, Raycaster, SRGBColorSpace, Scene, ShaderMaterial, Shape, ShapeGeometry, SphereGeometry, Vector2, Vector3, WebGLRenderer } from "three";
 import Stats from 'three/addons/libs/stats.module.js';
 import { StaticData, Station, TrainMeshes, placeRides, projectCoordsToMap, projectCoordsToMapVec3, updateRides, wpToArray } from "./app";
@@ -31,6 +31,7 @@ const MAX_LOOKAHEAD_TIME_SECONDS = FUTURE_ITERATIONS * FUTURE_STEP_SECONDS
 const lineColor = new Color(0xff0000)//.convertSRGBToLinear()
 const stationColor = new Color(0x003082)//.convertSRGBToLinear()
 const grassColor = new Color(0x1E4D19)//.convertSRGBToLinear()
+const cityColor = new Color(0xF39153)
 const backgroundColor = new Color(0x002D7A)//.convertSRGBToLinear();
 export const cursorColor = new Color(0xFF8552);
 
@@ -156,6 +157,21 @@ export class TrainMap {
         map_geometry.rotateX(Math.PI / 2)
         const mapMesh = new Mesh(map_geometry, grassMat)
         scene.add(mapMesh)
+
+
+        // NL City cores
+        const cityMat = new MeshBasicMaterial({ color: cityColor })
+        const coreGeometry = geometryFromGeoJson(this.data.map_cores)
+        cityMat.side = BackSide
+        coreGeometry.rotateX(Math.PI / 2)
+        const coreMesh = new Mesh(coreGeometry, cityMat)
+        // coreMesh.translateZ(1)
+        coreMesh.translateY(0.0001)
+        scene.add(coreMesh)
+
+
+        console.log(coreMesh)
+
 
         // Routes
         const lineMaterial = new LineBasicMaterial({ color: lineColor, linewidth: 10, opacity: .5, transparent: true })
@@ -598,17 +614,23 @@ function geometryFromGeoJson(map_geo: GeometryCollection): BufferGeometry {
     assertEq(map_geo.type, "GeometryCollection")
 
     let out = map_geo.geometries.map(feature => {
-        assertEq(feature.type, "MultiPolygon")
+        if (feature.type === "MultiPolygon") {
 
-        feature = feature as MultiPolygon;
+            const shapes: ShapeGeometry[] = feature.coordinates.map(polygonToShape)
+            return BufferGeometryUtils.mergeGeometries(shapes)
+        }
+        if (feature.type === "Polygon") {
+            return polygonToShape(feature.coordinates)
 
-        const shapes: ShapeGeometry[] = feature.coordinates.map(polygonToShape)
-        return BufferGeometryUtils.mergeGeometries(shapes)
+        }
+
+        throw new Error("Unexpected geometry type:" + feature.type)
+
+
     })
 
-    return out[0]
+    return BufferGeometryUtils.mergeGeometries(out)
 }
-
 function polygonToShape(polygon: Position[][]): ShapeGeometry {
     const shape = polygon[0];
     const holes = polygon.slice(1);

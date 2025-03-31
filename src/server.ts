@@ -42,6 +42,7 @@ export type RemoteData = {
     model_talent_643: GLTF;
     locations: string[];
     map_geo: any;
+    map_cores: any;
 };
 // Process and transform data in structures more useful locally
 export function parseData(remoteData: RemoteData): StaticData {
@@ -76,7 +77,8 @@ export function parseData(remoteData: RemoteData): StaticData {
     return {
         links, rides, stationMap, model, map_geo: remoteData.map_geo, stationPassages: passages, linkMap, locations: remoteData.locations,
         companies: company_map, model_flirt: remoteData.model_flirt,
-        model_talent_643: remoteData.model_talent_643
+        model_talent_643: remoteData.model_talent_643,
+        map_cores: remoteData.map_cores
     };
 }
 // Fetch remote data in parallel 
@@ -89,6 +91,7 @@ export async function getData(): Promise<RemoteData> {
 
     // const ridespr: Promise<RideJSON[]> = fetch(API_HOST + "api/rides_all").then(f => f.json()).then(f => f)
     const map_geopr: Promise<object> = fetch("/data/map.json").then(f => f.json());
+    const map_city_cores: Promise<object> = fetch("/data/cores.json").then(f => f.json());
 
     const modelLoader = new GLTFLoader();
     const virmpr = modelLoader.loadAsync("/assets/virm.glb");
@@ -96,8 +99,8 @@ export async function getData(): Promise<RemoteData> {
     const talent_643pr = modelLoader.loadAsync("/assets/c643.glb");
 
 
-    let [links, stations, rides, model_virm, model_flirt, map_geo, locations, companies, model_talent_643] = await Promise.all([linkspr, stationspr, ridespr, virmpr, flirtpr, map_geopr, locationspr, companypr, talent_643pr]);
+    let [links, stations, rides, model_virm, model_flirt, map_geo, locations, companies, model_talent_643, map_cores] = await Promise.all([linkspr, stationspr, ridespr, virmpr, flirtpr, map_geopr, locationspr, companypr, talent_643pr,map_city_cores]);
 
-    return { links, stations, rides, model_virm, model_flirt, map_geo, locations, companies, model_talent_643 };
+    return { links, stations, rides, model_virm, model_flirt, map_geo, locations, companies, model_talent_643, map_cores };
 }
 

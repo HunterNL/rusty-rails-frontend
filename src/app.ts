@@ -19,6 +19,7 @@ import { StationPassageRepo } from "./stoprepo"
 import { currentDayOffset, formatDaySeconds, formatDaySecondsWithSeconds, fromSeconds } from "./time"
 
 
+
 const TRACK_SIDEWAYS_OFFSET = 2.5
 const TRAIN_SCALE = 0.0017;
 
@@ -98,6 +99,7 @@ export type StaticData = {
     model_talent_643: GLTF
     map_geo: any,
     stationPassages: StationPassageRepo
+    map_cores: any;
 }
 
 function setupControlPanel(map: TrainMap) {
@@ -185,7 +187,7 @@ onDomReady(() => {
     })
 
     // Settings panel
-    document.querySelector("[data-field='line_color']").addEventListener("change", e => {
+    document.querySelector("[data-field='line_color']").addEventListener("change", _ => {
 
     })
 })
@@ -202,8 +204,9 @@ export type TrainMeshes = {
     talent: InstancedMesh
 }
 
-export function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: number): void {
+export function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: number): number {
     let index_counters = {}
+    let trains_updated = 0;
     Object.keys(meshes).forEach(key => {
         index_counters[key] = 0;
     })
@@ -211,9 +214,12 @@ export function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: num
     for (let i = 0; i < rides.length; i++) {
         const ride = rides[i];
 
+
         if (!isActiveAtTime(ride, currentTime)) {
             continue
         }
+
+        trains_updated++
 
         let meshName = ride.model;
         let mesh = meshes[meshName];
@@ -245,6 +251,8 @@ export function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: num
     Object.values(meshes).forEach(mesh => {
         mesh.instanceMatrix.needsUpdate = true
     })
+
+    return trains_updated
 }
 
 export function modelNameForTransitType(transitType: string, operator: string): "virm" | "flirt" | "talent" {
@@ -289,7 +297,9 @@ export function placeRides(data: StaticData, dataMap: Map<number, Ride>, time: n
         talent: createInstancedMesh(data.model_talent_643, data.rides.length),
     }
 
-    updateRides(meshes, data.rides, time)
+    let place_count = updateRides(meshes, data.rides, time)
+
+    console.log("Placed ", place_count, "rides")
 
     return meshes
 }

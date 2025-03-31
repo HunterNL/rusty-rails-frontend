@@ -8,4 +8,6 @@ Map workflow:
 - Repair intersections
 - Export as geojson
 
-https://esrinl-content.maps.arcgis.com/home/item.html?id=42305ab1704b4fb28ee74b0d0a157b17 bebouwde kom
+https://nationaalgeoregister.nl/geonetwork/srv/dut/catalog.search#/metadata/addb5dc0-e6ec-4b89-a7c5-657db9f98f42 bevolkingskernen
+
+- Use mapshaper to filter 'OPPTOT > 400', proj wgs84, clear fields, Simplify to ~1%, export as geojson
