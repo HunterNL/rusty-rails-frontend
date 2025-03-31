@@ -164,19 +164,26 @@ html {
 }
 .platform_label_spacer {
     display: block;
-    height: 1em;
+    height: 1.8em;
 }
 
 .timeline_label {
     transform: translateY(-2em);
     z-index: 2;
-    height: 2em;
+    height: 3em;
     text-align: center;
     border-left: 1px solid black;
+    padding-left: .2em;
+}
+
+.timeline_label_text {
+    transform: rotate(-8deg);
+    font-size: 1.1em;
+    white-space: nowrap;
 }
 
 .platform_timeline {
-    height: 2em;
+    height: 1em;
     display: inline-block;
     position: relative;
     width: 100%;
@@ -184,6 +191,12 @@ html {
     overflow: visible;
     outline: 1px dashed gray
 
+}
+
+.timeline_item.timeline_arrival {
+    /* text-decoration: dashed; */
+    /* text-decoration: s */
+    background-color: gray;
 }
 
 .platform_name {
@@ -196,7 +209,7 @@ html {
 }
 
 .timeline_item {
-    background-color: gray;
+    background-color: #266c79;
     position: absolute;
     height: 100%;
 }

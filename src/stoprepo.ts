@@ -3,7 +3,6 @@ import { isDigit } from "./number";
 import { isStationaryLeg, Ride, StationaryLeg } from "./rail/ride";
 import { STOPTYPE } from "./rail/stop";
 
-
 export type PlatformPassages = {
     platform: string,
     passages: StationPassage[]
@@ -12,7 +11,7 @@ export type PlatformPassages = {
 export type StationPassage = {
     start: number,
     end: number,
-    id: string,
+    label: string,
     kind: number | null,
 }
 
@@ -62,7 +61,7 @@ function platformOrder(a: string, b: string): number {
     return aNum - bNum
 }
 
-function appendLeg(map: StationPassageRepo, leg: StationaryLeg, id: string) {
+function appendLeg(map: StationPassageRepo, leg: StationaryLeg, ride: Ride) {
     // Ensure station exists in map
     if (!map.has(leg.station.code)) {
         map.set(leg.station.code, { station: leg.station, platforms: [] })
@@ -80,14 +79,16 @@ function appendLeg(map: StationPassageRepo, leg: StationaryLeg, id: string) {
 
     let passages = stationPassages.platforms.find(pl => pl.platform === leg.platforms.arrival_platform).passages;
 
-    passages.push({ start: leg.startTime, end: leg.endTime, id, kind: leg.stopType })
+    const label = getPassageLabel(leg, ride)
+
+    passages.push({ start: leg.startTime, end: leg.endTime, label, kind: leg.stopType })
 }
 
 export function newPassageRepo(rides: Ride[]): StationPassageRepo {
     const map: StationPassageRepo = new Map();
 
     // Populate map with every station
-    rides.forEach(ride => ride.legs.filter(isStationaryLeg).forEach(leg => appendLeg(map, leg, ride.id.toString())));
+    rides.forEach(ride => ride.legs.filter(isStationaryLeg).forEach(leg => appendLeg(map, leg, ride)));
 
     for (let station of map.values()) {
         station.platforms.sort((p1, p2) => platformOrder(p1.platform, p2.platform))
@@ -96,4 +97,15 @@ export function newPassageRepo(rides: Ride[]): StationPassageRepo {
     return map
 }
 
+
+function getPassageLabel(leg: StationaryLeg, ride: Ride): string {
+
+    // Show departure station on the arrival passage
+    if (leg.stopType === STOPTYPE.ARRIVAL) {
+        return (ride.legs[0] as StationaryLeg).station.name
+    }
+
+    // Else show show destination
+    return (ride.legs[ride.legs.length - 1] as StationaryLeg).station.name
+}
 

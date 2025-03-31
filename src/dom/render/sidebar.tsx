@@ -95,7 +95,8 @@ export function renderStationPassages(passages: StationPassages, startTime: numb
                     <div class="platform_timeline">
                         {platform.passages.map(passage => {
                             return <div className={calcPassageClass(passage)} style={calcPassageStyle(passage, startTime, endTime)}>
-                                <div class="timeline_label">{passage.id}</div>
+                                {/* <div class="timeline_time">{formatDaySeconds(passage.start).toString()}</div> */}
+                                <div class="timeline_label"><div class="timeline_label_text">{passage.label}</div></div>
                             </div>
                         })}
                     </div>
