@@ -1,6 +1,7 @@
 import { Station } from "./app";
 import { isDigit } from "./number";
 import { isStationaryLeg, Ride, StationaryLeg } from "./rail/ride";
+import { STOPTYPE } from "./rail/stop";
 
 
 export type PlatformPassages = {
@@ -11,7 +12,8 @@ export type PlatformPassages = {
 export type StationPassage = {
     start: number,
     end: number,
-    id: string
+    id: string,
+    kind: number | null,
 }
 
 export type StationPassages = {
@@ -78,7 +80,7 @@ function appendLeg(map: StationPassageRepo, leg: StationaryLeg, id: string) {
 
     let passages = stationPassages.platforms.find(pl => pl.platform === leg.platforms.arrival_platform).passages;
 
-    passages.push({ start: leg.startTime, end: leg.endTime, id }) //TODO Filter to rideId for this stop specifically
+    passages.push({ start: leg.startTime, end: leg.endTime, id, kind: leg.stopType })
 }
 
 export function newPassageRepo(rides: Ride[]): StationPassageRepo {

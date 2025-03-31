@@ -57,20 +57,30 @@ export function createStationSidebar(station: Station): Element {
 }
 
 function calcPassageStyle(passage: StationPassage, startTime: number, endTime: number): Partial<CSSStyleDeclaration> {
-    let offset = inverseLerp(startTime, endTime, passage.start);
+    let startPosition = inverseLerp(startTime, endTime, passage.start);
+    let endFraction = inverseLerp(startTime, endTime, passage.end)
 
 
     // TODO Filter out earlier
-    if (offset < 0 || offset > 1) {
+    if (startPosition < 0 || startPosition > 1) {
         return {
             display: "none"
         }
     }
 
     return {
-        left: (offset * 100) + "%",
+        left: (startPosition * 100) + "%",
+        right: 100 - (endFraction * 100) + "%",
         top: "0px"
     }
+}
+
+const kindMap = ["unknown", "timeline_waypoint", "timeline_short", "timeline_long", "timeline_departure", "timeline_arrival"]
+
+function calcPassageClass(passage: StationPassage) {
+    let a = "timeline_item"
+    a = a + " " + kindMap[passage.kind]
+    return a
 }
 
 
@@ -80,11 +90,12 @@ export function renderStationPassages(passages: StationPassages, startTime: numb
         <div class="station_platforms">
             {passages.platforms.map(platform => {
                 return <div class="station_platform">
+                    <div class="platform_label_spacer"></div>
                     <div class="platform_name">{platform.platform}</div>
                     <div class="platform_timeline">
                         {platform.passages.map(passage => {
-                            return <div class="timeline_item" style={calcPassageStyle(passage, startTime, endTime)}>
-                                {passage.id}
+                            return <div className={calcPassageClass(passage)} style={calcPassageStyle(passage, startTime, endTime)}>
+                                <div class="timeline_label">{passage.id}</div>
                             </div>
                         })}
                     </div>
