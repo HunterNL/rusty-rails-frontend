@@ -222,7 +222,7 @@ export function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: num
 
         trains_updated++
 
-        let meshName = ride.timetable.model;
+        let meshName = ride.model;
         let mesh = meshes[meshName];
         let meshIndex = index_counters[meshName];
 
@@ -256,7 +256,9 @@ export function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: num
     return trains_updated
 }
 
-export function modelNameForTransitType(transitType: string, operator: string): "virm" | "flirt" | "talent" {
+export type TrainModelName = "virm" | "flirt" | "talent"
+
+export function modelNameForTransitType(transitType: string, operator: string): TrainModelName {
     if (transitType === "IC") {
         return "virm";
     }
@@ -292,10 +294,11 @@ function modelByName(data: StaticData, name: string): any {
 }
 
 export function placeRides(data: StaticData, dataMap: Map<number, Ride>, time: number, meshes: TrainMeshes): Ride[] {
-    const rides = data.rides.map(r => {
+    const rides = data.rides.map(timetable => {
         return {
-            timetable: r,
-            speed: 0
+            timetable,
+            speed: 0,
+            model: modelNameForTransitType(timetable.transit_type, timetable.operator),
         }
     })
 

@@ -280,7 +280,7 @@ export type MovingLeg = {
     cruising_speed: number;
 };
 export type RideTimetable = {
-    model: string
+
     line: string,
     operator: string
     id: number;
@@ -295,7 +295,8 @@ export type RideTimetable = {
 
 export type Ride = {
     timetable: RideTimetable
-    speed: number
+    speed: number,
+    model: string
 }
 
 export type RideId = {
@@ -353,7 +354,7 @@ export function parseRide(rideJson: DatedRideJson, stations: Map<string, Station
 
     const timetable: RideTimetable = {
         transit_type: ride.transit_type,
-        model: modelNameForTransitType(ride.transit_type, company_map[ride.operator].name),
+
         id: ride.id,
         line: getLine(ride.id),
         operator: company_map[ride.operator].name,
