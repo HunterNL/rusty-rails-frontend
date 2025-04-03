@@ -1,5 +1,5 @@
 import { TripRideLeg } from "../../app";
-import { Ride, Trip, ride_stopIndexbyCode, ride_stopbyCode } from "../../rail/ride";
+import { RideTimetable, Trip, ride_stopIndexbyCode, ride_stopbyCode } from "../../rail/ride";
 import { formatDaySeconds } from "../../time";
 import { JSXFactory } from "../tsx";
 

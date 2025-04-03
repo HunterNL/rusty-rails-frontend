@@ -10,13 +10,12 @@ import { Stop } from "./stop";
 import { asSeconds } from "../time";
 import { distance_fraction_from_constant_acceleration, distance_fraction_from_cruising_speed, SpeedPosition } from "../math"
 
-
 export type Position2d = {
     position: Coordinates
     forward: Vector2
 }
 
-function findCurrentLegIndex(ride: Ride, time: number): number {
+function findCurrentLegIndex(ride: RideTimetable, time: number): number {
 
     const legIndex = ride.legs.findIndex(leg => {
         return time >= leg.startTime && time < leg.endTime
@@ -119,7 +118,7 @@ function findCurrentLink(leg: MovingLeg, coveredLegDistance: number): TrackPosit
     throw new Error("Link not found")
 }
 
-export function isActiveAtTime(ride: Ride, time: number): boolean {
+export function isActiveAtTime(ride: RideTimetable, time: number): boolean {
     return time >= ride.startTime && time < ride.endTime
 }
 
@@ -138,7 +137,7 @@ function trackPositionForStation(lastLeg: MovingLeg | undefined, nextLeg?: Movin
 
 export type TrainPosition = TrackPosition & { speed: number }
 
-export function trainPosition(ride: Ride, time: number): TrainPosition {
+export function trainPosition(ride: RideTimetable, time: number): TrainPosition {
     if (!isActiveAtTime(ride, time)) {
         throw new Error("Cannot get position of train outside schedule times");
     }
@@ -280,7 +279,7 @@ export type MovingLeg = {
     link_distance: number;
     cruising_speed: number;
 };
-export type Ride = {
+export type RideTimetable = {
     model: string
     line: string,
     operator: string
@@ -291,8 +290,13 @@ export type Ride = {
     endTime: number;
     legs: Leg[];
     transit_type: string
-    speed: number // TODO Dont have this here, keep rides readonly
+    date: Date
 };
+
+export type Ride = {
+    timetable: RideTimetable
+    speed: number
+}
 
 export type RideId = {
     number: number;
@@ -342,12 +346,12 @@ export function create_link_codes(start: string, end: string, waypoints: string[
         return left + "_" + right
     })
 }
-export function parseRide(rideJson: DatedRideJson, stations: Map<string, Station>, links: Map<string, link>, locations: string[], company_map: Record<string, Company>): Ride {
+export function parseRide(rideJson: DatedRideJson, stations: Map<string, Station>, links: Map<string, link>, locations: string[], company_map: Record<string, Company>): RideTimetable {
     let ride = rideJson.line;
     let legs = ride.legs.map((legJson, index) => parseLeg(legJson, index, ride, stations, links, locations))
 
 
-    return {
+    const timetable: RideTimetable = {
         transit_type: ride.transit_type,
         model: modelNameForTransitType(ride.transit_type, company_map[ride.operator].name),
         id: ride.id,
@@ -358,15 +362,20 @@ export function parseRide(rideJson: DatedRideJson, stations: Map<string, Station
         startTime: ride.startTime,
         stops: getStops(legs),
         legs,
-        speed: 0
+        date: new Date(Date.parse(rideJson.date + "T00:00:00.000Z"))
     }
+
+    if (isNaN(timetable.date.getTime())) {
+        throw new Error("Invalid date")
+    }
+    return timetable
 }
 
-export function ride_stopIndexbyCode(ride: Ride, code: string): number {
+export function ride_stopIndexbyCode(ride: RideTimetable, code: string): number {
     return ride.legs.findIndex(leg => leg.stationary && leg.station.code.toLowerCase() === code);
 }
 
-export function ride_stopbyCode(ride: Ride, code: string): Leg | undefined {
+export function ride_stopbyCode(ride: RideTimetable, code: string): Leg | undefined {
     return ride.legs.find(leg => leg.stationary && leg.station.code.toLowerCase() === code);
 }
 

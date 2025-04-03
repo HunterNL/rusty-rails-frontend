@@ -13,7 +13,7 @@ import { Coordinates, mercator } from "./geo"
 import { LineVisualType, Time, TrainMap, createTimelineSingle, cursorColor, planColor } from "./map"
 import { LegLink } from "./rail/leglink"
 import { link } from "./rail/link"
-import { Ride, Trip, isActiveAtTime, realPosition, ride_stopIndexbyCode, trainPosition } from "./rail/ride"
+import { Ride, RideTimetable, Trip, isActiveAtTime, realPosition, ride_stopIndexbyCode, trainPosition } from "./rail/ride"
 import { findPath, getData, parseData } from "./server"
 import { StationPassageRepo } from "./stoprepo"
 import { currentDayOffset, formatDaySeconds, formatDaySecondsWithSeconds, fromSeconds } from "./time"
@@ -91,7 +91,7 @@ export type StaticData = {
     companies: Record<string, Company>
     locations: string[]
     links: link[]
-    rides: Ride[]
+    rides: RideTimetable[]
     stationMap: Map<string, Station>
     linkMap: Map<string, link>,
     model: GLTF,
@@ -215,19 +215,20 @@ export function updateRides(meshes: TrainMeshes, rides: Ride[], currentTime: num
         const ride = rides[i];
 
 
-        if (!isActiveAtTime(ride, currentTime)) {
+        if (!isActiveAtTime(ride.timetable, currentTime)) {
             continue
+
         }
 
         trains_updated++
 
-        let meshName = ride.model;
+        let meshName = ride.timetable.model;
         let mesh = meshes[meshName];
         let meshIndex = index_counters[meshName];
 
         mesh.userData.idMap.set(meshIndex, ride)
 
-        const tp = trainPosition(ride, currentTime);
+        const tp = trainPosition(ride.timetable, currentTime);
         const pos = realPosition(tp);
         ride.speed = tp.speed
 
@@ -290,18 +291,28 @@ function modelByName(data: StaticData, name: string): any {
     throw new Error("Unknown model: " + name)
 }
 
-export function placeRides(data: StaticData, dataMap: Map<number, Ride>, time: number): TrainMeshes {
-    let meshes: TrainMeshes = {
+export function placeRides(data: StaticData, dataMap: Map<number, Ride>, time: number, meshes: TrainMeshes): Ride[] {
+    const rides = data.rides.map(r => {
+        return {
+            timetable: r,
+            speed: 0
+        }
+    })
+
+    let place_count = updateRides(meshes, rides, time)
+
+    console.log("Placed ", place_count, "rides")
+    console.log(rides)
+
+    return rides
+}
+
+export function createMeshes(data: StaticData): TrainMeshes {
+    return {
         virm: createInstancedMesh(data.model, data.rides.length),
         flirt: createInstancedMesh(data.model_flirt, data.rides.length),
         talent: createInstancedMesh(data.model_talent_643, data.rides.length),
     }
-
-    let place_count = updateRides(meshes, data.rides, time)
-
-    console.log("Placed ", place_count, "rides")
-
-    return meshes
 }
 
 function createInstancedMesh(model: any, ride_count: number): InstancedMesh {
@@ -466,12 +477,12 @@ function setupTimer(timer_element: Element, timer: Time) {
 }
 
 export type TripRideLeg = {
-    ride: Ride,
+    ride: RideTimetable,
     from: number
     to: number
 }
 
-function joinRides(trip: Trip, rides: Ride[]): TripRideLeg[] {
+function joinRides(trip: Trip, rides: RideTimetable[]): TripRideLeg[] {
     return trip.legs.map(leg => {
         let ride = rides.find(r => r.id.toString() === leg.id);
         let from = ride_stopIndexbyCode(ride, leg.from.toLowerCase())
@@ -481,7 +492,7 @@ function joinRides(trip: Trip, rides: Ride[]): TripRideLeg[] {
     })
 }
 
-function joinTripsWithRides(trips: Trip[], rides: Ride[]): TripRideLeg[][] {
+function joinTripsWithRides(trips: Trip[], rides: RideTimetable[]): TripRideLeg[][] {
     // Filter out trips that miss rides
     const valid_trips = trips.filter(trip => trip.legs.every(leg => rides.some(ride => ride.id.toString() === leg.id)));
 

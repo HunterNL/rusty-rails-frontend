@@ -1,6 +1,6 @@
 import { Station } from "./app";
 import { isDigit } from "./number";
-import { isStationaryLeg, Ride, StationaryLeg } from "./rail/ride";
+import { isStationaryLeg, RideTimetable, StationaryLeg } from "./rail/ride";
 import { STOPTYPE } from "./rail/stop";
 
 export type PlatformPassages = {
@@ -61,7 +61,7 @@ function platformOrder(a: string, b: string): number {
     return aNum - bNum
 }
 
-function appendLeg(map: StationPassageRepo, leg: StationaryLeg, ride: Ride) {
+function appendLeg(map: StationPassageRepo, leg: StationaryLeg, ride: RideTimetable) {
     // Ensure station exists in map
     if (!map.has(leg.station.code)) {
         map.set(leg.station.code, { station: leg.station, platforms: [] })
@@ -84,7 +84,7 @@ function appendLeg(map: StationPassageRepo, leg: StationaryLeg, ride: Ride) {
     passages.push({ start: leg.startTime, end: leg.endTime, label, kind: leg.stopType })
 }
 
-export function newPassageRepo(rides: Ride[]): StationPassageRepo {
+export function newPassageRepo(rides: RideTimetable[]): StationPassageRepo {
     const map: StationPassageRepo = new Map();
 
     // Populate map with every station
@@ -98,7 +98,7 @@ export function newPassageRepo(rides: Ride[]): StationPassageRepo {
 }
 
 
-function getPassageLabel(leg: StationaryLeg, ride: Ride): string {
+function getPassageLabel(leg: StationaryLeg, ride: RideTimetable): string {
 
     // Show departure station on the arrival passage
     if (leg.stopType === STOPTYPE.ARRIVAL) {

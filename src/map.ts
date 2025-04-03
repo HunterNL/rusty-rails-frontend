@@ -6,12 +6,12 @@ import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 import { GeometryCollection, MultiPolygon, Polygon, Position } from "geojson";
 import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, IUniform, Line, LineBasicMaterial, LineSegments, Mesh, MeshBasicMaterial, Object3D, Path, PerspectiveCamera, Raycaster, SRGBColorSpace, Scene, ShaderMaterial, Shape, ShapeGeometry, SphereGeometry, Vector2, Vector3, WebGLRenderer } from "three";
 import Stats from 'three/addons/libs/stats.module.js';
-import { StaticData, Station, TrainMeshes, placeRides, projectCoordsToMap, projectCoordsToMapVec3, updateRides, wpToArray } from "./app";
+import { StaticData, Station, TrainMeshes, createMeshes, placeRides, projectCoordsToMap, projectCoordsToMapVec3, updateRides, wpToArray } from "./app";
 import { isDebugEnabled } from "./env";
 import { remap } from "./number";
 import { legLink_IterWithDistance } from "./rail/leglink";
 import { PathPoint } from "./rail/path";
-import { MovingLeg, Ride } from "./rail/ride";
+import { MovingLeg, Ride, RideTimetable } from "./rail/ride";
 import { asSeconds, currentDayOffset, fromSeconds } from "./time";
 
 const NEAR_CLIP = 0.01
@@ -79,6 +79,7 @@ export class TrainMap {
     time: Time;
 
     mapContent: MapContent;
+    rides: Ride[];
     raycaster: Raycaster;
     cursor: Mesh;
     cursorTime: undefined | number
@@ -132,11 +133,12 @@ export class TrainMap {
         this.running = false;
 
         this.mapContent = this.populateScene()
+        this.rides = placeRides(data, this.instanceIdToRideMap, this.time.currentTime, this.mapContent.trains);
 
         this.intervalHandle =
             window.setInterval((dt: number) => {
                 updateTime(this.time, dt);
-                updateRides(this.mapContent.trains, data.rides, this.time.currentTime)
+                updateRides(this.mapContent.trains, this.rides, this.time.currentTime)
             }, TRAIN_UPDATE_INTERVAL_MS)
 
         if (SHOW_STATS) {
@@ -186,8 +188,10 @@ export class TrainMap {
         this.timelineUniforms = timeLine.uniforms
 
 
+
         // Train models
-        const rideMeshes = placeRides(data, this.instanceIdToRideMap, this.time.currentTime)
+        const rideMeshes = createMeshes(data)
+
 
         scene.add(rideMeshes.flirt)
         scene.add(rideMeshes.virm)
@@ -452,7 +456,7 @@ function elevationForTime(base_time: number, current_time: number) {
     return asSeconds(height) * TIMELINE_ELEVATION_PER_SECOND
 }
 
-export function createTimelineSingle(ride: Ride, from: number, to: number, now: number, color: Color) {
+export function createTimelineSingle(ride: RideTimetable, from: number, to: number, now: number, color: Color) {
     const points: Vector3[] = [];
     let lastPoint = null;
 
@@ -537,7 +541,7 @@ function colorForLine(line: string): Color {
 }
 
 
-function appendRidePointsAll(startTime: number, endTime: number, ride: Ride, points: Vector3[], colors: Color[], operatorColor: Color[]) {
+function appendRidePointsAll(startTime: number, endTime: number, ride: RideTimetable, points: Vector3[], colors: Color[], operatorColor: Color[]) {
     let lastPoint = null;
     let operatorColor_ = colorForOperator(ride.operator);
     let lineColor = colorForLine(ride.line);

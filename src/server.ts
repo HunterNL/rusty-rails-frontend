@@ -1,7 +1,7 @@
 import { GLTF, GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { API_HOST, Company, StaticData, Station } from "./app";
 import { LinkJSON, link, parseLink } from "./rail/link";
-import { DatedRideJson, Ride, RideJSON, Trip, parseRide } from "./rail/ride";
+import { DatedRideJson, RideTimetable, RideJSON, Trip, parseRide } from "./rail/ride";
 import { newPassageRepo } from "./stoprepo";
 
 
@@ -28,7 +28,7 @@ export async function findPath(staticData: StaticData, from: string, to: string)
 
 export type FindPathResponse = {
     trips: Trip[];
-    rides: Ride[];
+    rides: RideTimetable[];
 };
 
 
@@ -99,7 +99,7 @@ export async function getData(): Promise<RemoteData> {
     const talent_643pr = modelLoader.loadAsync("/assets/c643.glb");
 
 
-    let [links, stations, rides, model_virm, model_flirt, map_geo, locations, companies, model_talent_643, map_cores] = await Promise.all([linkspr, stationspr, ridespr, virmpr, flirtpr, map_geopr, locationspr, companypr, talent_643pr,map_city_cores]);
+    let [links, stations, rides, model_virm, model_flirt, map_geo, locations, companies, model_talent_643, map_cores] = await Promise.all([linkspr, stationspr, ridespr, virmpr, flirtpr, map_geopr, locationspr, companypr, talent_643pr, map_city_cores]);
 
     return { links, stations, rides, model_virm, model_flirt, map_geo, locations, companies, model_talent_643, map_cores };
 }

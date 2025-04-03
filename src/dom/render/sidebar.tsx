@@ -1,5 +1,5 @@
 import { PlatformJSON, StaticData, Station } from "../../app";
-import { Ride } from "../../rail/ride";
+import { Ride, RideTimetable } from "../../rail/ride";
 import { inverseLerp } from "../../number";
 import { Stop, STOPTYPE } from "../../rail/stop";
 import { StationPassage, StationPassages } from "../../stoprepo";
@@ -30,13 +30,13 @@ function stopDisplayplatform(platform: PlatformJSON): string {
 }
 
 export function createRideSideBar(ride: Ride, data: StaticData): Element {
-    const stops = ride.stops
+    const stops = ride.timetable.stops
     const stations = data.stationMap
 
     // debugger
 
     const elem = <div class="sidebar_ride">
-        <div class="id">{ride.id.toString()}</div>
+        <div class="id">{ride.timetable.id.toString()}</div>
         <div class="speed">{Math.round(ride.speed * 3.6).toString()} km/h</div>
         {stops.map(stop =>
             <div class="stop">
