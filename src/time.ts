@@ -18,10 +18,16 @@ export function fromHourSecond(hour: number, seconds: number) {
     return hour * HOUR + seconds * SECOND
 }
 
+function convertTZ(date, tzString) {
+    return new Date((typeof date === "string" ? new Date(date) : date).toLocaleString("en-US", { timeZone: tzString }));
+}
+
+
 export function currentDayOffset(): number {
     // TODO Timezone awareness, dayoffset should always be Europe/Amsterdam
     const localMidnight = startOfDay(new Date());
-    const elapsedDaySeconds = differenceInMilliseconds(new Date(), localMidnight);
+    const now = convertTZ(new Date(), "Europe/Amsterdam")
+    const elapsedDaySeconds = differenceInMilliseconds(now, localMidnight);
     return elapsedDaySeconds;
 }
 
@@ -42,11 +48,11 @@ export function formatDaySecondsWithSeconds(dayOffset_milliseconds: number): str
     const hours = Math.floor(secondsIntoDay / HOUR)
     const secondsIntoHour = (secondsIntoDay - hours * HOUR)
     const minutes = Math.floor(secondsIntoHour / MINUTE);
-    const seconds =Math.floor((dayOffset_milliseconds % MINUTE)/SECOND);
+    const seconds = Math.floor((dayOffset_milliseconds % MINUTE) / SECOND);
 
     const hourString = hours.toString(10).padStart(2, "0")
     const minuteString = minutes.toString(10).padStart(2, "0");
-    const secondsString = seconds.toString(10).padStart(2,'0');
-    
+    const secondsString = seconds.toString(10).padStart(2, '0');
+
     return hourString + ":" + minuteString + ":" + secondsString;
 }
