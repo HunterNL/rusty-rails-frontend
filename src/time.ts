@@ -25,8 +25,9 @@ function convertTZ(date, tzString) {
 
 export function currentDayOffset(): number {
     // TODO Timezone awareness, dayoffset should always be Europe/Amsterdam
-    const localMidnight = startOfDay(new Date());
+
     const now = convertTZ(new Date(), "Europe/Amsterdam")
+    const localMidnight = startOfDay(now);
     const elapsedDaySeconds = differenceInMilliseconds(now, localMidnight);
     return elapsedDaySeconds;
 }
