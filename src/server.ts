@@ -3,6 +3,8 @@ import { API_HOST, Company, StaticData, Station } from "./app";
 import { LinkJSON, link, parseLink } from "./rail/link";
 import { DatedRideJson, RideTimetable, RideJSON, Trip, parseRide } from "./rail/ride";
 import { newPassageRepo } from "./stoprepo";
+import { format } from "date-fns";
+
 
 
 export async function findPath(staticData: StaticData, from: string, to: string): Promise<FindPathResponse> {
@@ -15,15 +17,17 @@ export async function findPath(staticData: StaticData, from: string, to: string)
     });
     let data: FindPathResponseJson = await fetch(base_url + "?" + params.toString()).then(resp => resp.json());
 
-    console.log(data);
+  console.log(data);
+
+  let date = format(new Date(Date.now()),"y-MM-dd")
 
     return {
         trips: data.trips,
-        rides: data.rides.map(r => parseRide(r, staticData.stationMap, staticData.linkMap, staticData.locations, staticData.companies))
+        rides: data.rides.map(r => parseRide({line:r,date}, staticData.stationMap, staticData.linkMap, staticData.locations, staticData.companies))
     };
 } export type FindPathResponseJson = {
     trips: Trip[];
-    rides: DatedRideJson[];
+    rides: RideJSON[];
 };
 
 export type FindPathResponse = {
@@ -81,7 +85,7 @@ export function parseData(remoteData: RemoteData): StaticData {
         map_cores: remoteData.map_cores
     };
 }
-// Fetch remote data in parallel 
+// Fetch remote data in parallel
 export async function getData(): Promise<RemoteData> {
     const linkspr: Promise<link[]> = fetch(API_HOST + "data/links.json").then(f => f.json()).then(f => f);
     const stationspr: Promise<Station[]> = fetch(API_HOST + "data/stations.json").then(f => f.json()).then(f => f);
@@ -103,4 +107,3 @@ export async function getData(): Promise<RemoteData> {
 
     return { links, stations, rides, model_virm, model_flirt, map_geo, locations, companies, model_talent_643, map_cores };
 }
-
