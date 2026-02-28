@@ -263,7 +263,7 @@ export function modelNameForTransitType(transitType: string, operator: string): 
         return "virm";
     }
 
-    if (operator === "DB" && transitType === "ST") {
+    if (operator === "Deutsche Bahn" && transitType === "ST") {
         return "talent"
     }
 
